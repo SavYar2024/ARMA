@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АРМА — Адміністрування реєстру</title>
+<link rel="icon" type="image/png" href="logo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#f0f4f8;--surface:rgba(255,255,255,.82);--surface-hi:#fff;
+  --blue:#1e50dc;--blue-d:#1640b8;--blue-g:rgba(30,80,220,.08);
+  --green:#0e9f6e;--red:#dc2626;--orange:#e86c19;--purple:#7c3aed;--amber:#d97706;
+  --ink:#0b1220;--ink2:#1e293b;--ink3:#334155;--mid:#64748b;--muted:#94a3b8;--dim:#cbd5e1;
+  --line:rgba(0,0,0,.07);--line2:rgba(0,0,0,.04);
+  --shadow:0 4px 20px rgba(11,18,32,.10);--shadow-lg:0 12px 40px rgba(11,18,32,.16);
+  --blur:blur(18px) saturate(1.4);
+  --r:10px;--r-lg:16px;--nav-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 55% at 8% 8%,rgba(30,80,220,.08) 0%,transparent 55%),radial-gradient(ellipse 55% 65% at 94% 88%,rgba(124,58,237,.06) 0%,transparent 55%),linear-gradient(155deg,#eef2fb 0%,#f4f6fc 50%,#ede9f8 100%);z-index:-1}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:4px}
+
+/* NAV */
+.topnav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:2000;background:rgba(255,255,255,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.6);box-shadow:0 2px 16px rgba(11,18,32,.09);display:flex;align-items:center;gap:0}
+.nav-brand{display:flex;align-items:center;gap:10px;padding:0 18px;height:100%;border-right:1px solid var(--line);flex-shrink:0}
+.nav-logo{width:34px;height:34px;object-fit:contain}
+.nav-title{font-size:13.5px;font-weight:800;color:var(--blue-d)}
+.nav-sub{font-size:9.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+.nav-badge{margin-left:10px;padding:3px 10px;border-radius:12px;background:rgba(220,38,38,.1);color:var(--red);font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px}
+.nav-actions{margin-left:auto;display:flex;gap:8px;padding:0 16px}
+.nav-btn{padding:7px 14px;border-radius:var(--r);border:1.5px solid var(--line);background:rgba(255,255,255,.8);color:var(--ink3);font-size:12px;font-weight:600;transition:all .12s;display:flex;align-items:center;gap:5px}
+.nav-btn:hover{background:#fff;box-shadow:var(--shadow)}
+.nav-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.nav-btn.primary:hover{background:var(--blue-d)}
+.nav-btn.danger{background:rgba(220,38,38,.1);color:var(--red);border-color:rgba(220,38,38,.25)}
+.nav-btn.danger:hover{background:var(--red);color:#fff}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:260px 1fr;height:calc(100vh - var(--nav-h));margin-top:var(--nav-h);overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{background:rgba(244,247,253,.9);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-right:1px solid rgba(255,255,255,.7);overflow-y:auto;padding:14px}
+.sb-section{margin-bottom:20px}
+.sb-section h3{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding:0 8px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;color:var(--ink3);font-size:13px;font-weight:500;border:1.5px solid transparent}
+.sb-item:hover{background:rgba(255,255,255,.8)}
+.sb-item.active{background:var(--blue-g);color:var(--blue);border-color:rgba(30,80,220,.2);font-weight:600}
+.sb-item .icon{font-size:15px;width:22px;text-align:center}
+.sb-item .cnt{margin-left:auto;font-size:10.5px;padding:1px 7px;border-radius:8px;background:rgba(0,0,0,.06);color:var(--muted);font-weight:700}
+.sb-item.active .cnt{background:rgba(30,80,220,.12);color:var(--blue)}
+.sb-divider{height:1px;background:var(--line);margin:10px 0}
+
+/* MAIN */
+.main{overflow:hidden;display:flex;flex-direction:column}
+.main-head{padding:14px 20px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.5);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.main-head h2{font-size:16px;font-weight:800;color:var(--ink)}
+.main-head .cnt-pill{font-size:12px;padding:3px 10px;border-radius:10px;background:var(--blue-g);color:var(--blue);font-weight:700}
+.main-actions{display:flex;gap:8px;margin-left:auto}
+.btn{padding:7px 14px;border-radius:var(--r);border:1.5px solid var(--line);background:rgba(255,255,255,.85);color:var(--ink3);font-size:12px;font-weight:600;transition:all .12s;display:flex;align-items:center;gap:5px;cursor:pointer;font-family:inherit}
+.btn:hover{background:#fff;box-shadow:0 2px 8px rgba(11,18,32,.09)}
+.btn.prim{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.prim:hover{background:var(--blue-d)}
+.btn.success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.danger{background:rgba(220,38,38,.1);color:var(--red);border-color:rgba(220,38,38,.25)}
+.btn.danger:hover{background:var(--red);color:#fff}
+.btn.warn{background:rgba(217,119,6,.1);color:var(--amber);border-color:rgba(217,119,6,.25)}
+
+/* TOOLBAR */
+.toolbar{padding:10px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.35);flex-shrink:0;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:7px 14px 7px 34px;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.85);font-size:12.5px;color:var(--ink);outline:none;transition:all .15s}
+.search-input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(30,80,220,.12)}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none}
+.filter-sel{padding:6px 10px;border-radius:var(--r);border:1.5px solid var(--line);background:rgba(255,255,255,.85);color:var(--ink3);font-size:12px;outline:none;cursor:pointer}
+.filter-sel:focus{border-color:var(--blue)}
+.per-page{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)}
+.per-page select{padding:4px 8px;border-radius:7px;border:1.5px solid var(--line);background:rgba(255,255,255,.85);font-size:12px;outline:none}
+
+/* TABLE */
+.table-wrap{flex:1;overflow:auto;padding:0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{position:sticky;top:0;z-index:10;background:rgba(244,247,253,.95);backdrop-filter:blur(12px)}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1.5px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--blue)}
+th.sorted{color:var(--blue)}
+th .sort-icon{margin-left:4px;opacity:.5}
+td{padding:9px 14px;border-bottom:1px solid var(--line2);color:var(--ink3);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.7)}
+tr.selected td{background:rgba(30,80,220,.06)}
+.td-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);white-space:nowrap}
+.td-desc{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:var(--ink)}
+.td-addr{max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-actions{white-space:nowrap;display:flex;gap:4px}
+.ta-btn{padding:3px 9px;border-radius:7px;border:1.5px solid var(--line);background:rgba(255,255,255,.8);color:var(--ink3);font-size:11px;font-weight:600;transition:all .1s;cursor:pointer;font-family:inherit}
+.ta-btn:hover{background:#fff}
+.ta-btn.edit{color:var(--blue);border-color:rgba(30,80,220,.2)}
+.ta-btn.edit:hover{background:var(--blue-g)}
+.ta-btn.del{color:var(--red);border-color:rgba(220,38,38,.2)}
+.ta-btn.del:hover{background:rgba(220,38,38,.08)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap}
+.ba{background:rgba(232,108,25,.1);color:#b84a0a}
+.bc{background:rgba(14,159,110,.1);color:#065f46}
+.bn{background:rgba(124,58,237,.1);color:#5b21b6}
+.bx{background:rgba(220,38,38,.09);color:#991b1b}
+.bz{background:rgba(100,116,139,.08);color:#475569}
+
+/* PAGINATION */
+.pagination{padding:10px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mid);background:rgba(255,255,255,.5);flex-shrink:0}
+.pgn-btns{display:flex;gap:4px}
+.pgn-btn{padding:5px 11px;border-radius:8px;border:1.5px solid var(--line);background:rgba(255,255,255,.85);color:var(--ink3);font-size:12px;font-weight:500;transition:all .12s;cursor:pointer}
+.pgn-btn:disabled{opacity:.35;cursor:not-allowed}
+.pgn-btn:not(:disabled):hover{background:#fff;border-color:var(--blue);color:var(--blue)}
+.pgn-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,18,32,.45);backdrop-filter:blur(6px);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);width:100%;max-width:680px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;animation:mIn .18s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{font-size:16px;font-weight:800;color:var(--ink)}
+.modal-close{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:rgba(255,255,255,.85);color:var(--mid);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s}
+.modal-close:hover{background:rgba(220,38,38,.08);color:var(--red);border-color:var(--red)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:rgba(248,250,252,.8)}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px}
+.field input,.field select,.field textarea{padding:8px 12px;border-radius:var(--r);border:1.5px solid var(--dim);background:#fff;font-size:13px;color:var(--ink);outline:none;transition:all .15s;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,80,220,.10)}
+.field textarea{resize:vertical;min-height:80px;line-height:1.55}
+.field .hint{font-size:10.5px;color:var(--muted)}
+.field select{cursor:pointer}
+.req{color:var(--red)}
+
+/* IMPORT BOX */
+.import-zone{border:2px dashed var(--dim);border-radius:var(--r-lg);padding:32px;text-align:center;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.5)}
+.import-zone:hover,.import-zone.drag{border-color:var(--blue);background:var(--blue-g)}
+.import-zone .iz-icon{font-size:36px;margin-bottom:10px;opacity:.4}
+.import-zone h4{font-size:14px;font-weight:700;color:var(--ink3);margin-bottom:5px}
+.import-zone p{font-size:12px;color:var(--muted)}
+
+/* STATS CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);flex-shrink:0}
+.stat-card{padding:14px;border-radius:var(--r-lg);background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 3px 12px rgba(11,18,32,.07)}
+.stat-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:800;line-height:1}
+.stat-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast-item{padding:11px 16px;border-radius:var(--r-lg);font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.2);pointer-events:all;animation:tIn .25s ease;display:flex;align-items:center;gap:8px}
+@keyframes tIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.toast-item.ok{background:var(--green)}
+.toast-item.err{background:var(--red)}
+.toast-item.info{background:var(--blue)}
+
+/* CONFIRM */
+.confirm-box{background:#fff;border-radius:var(--r-lg);padding:24px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);animation:mIn .18s ease}
+.confirm-box h3{font-size:16px;font-weight:800;margin-bottom:8px}
+.confirm-box p{font-size:13px;color:var(--mid);line-height:1.55;margin-bottom:20px}
+.confirm-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* UPLOAD progress */
+.upload-progress{height:5px;background:var(--dim);border-radius:3px;overflow:hidden;margin-top:8px;display:none}
+.upload-progress-fill{height:100%;background:var(--blue);width:0%;transition:width .3s}
+
+/* MOBILE */
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .form-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .main-head{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<div id="toast-container" class="toast"></div>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <img src="logo.png" class="nav-logo" alt="АРМА">
+    <div>
+      <div class="nav-title">АРМА · Адмін</div>
+      <div class="nav-sub">Управління реєстром активів</div>
+    </div>
+  </div>
+  <span class="nav-badge">🔒 Адміністратор</span>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="exportXLSX()">⬇ Excel</button>
+    <button class="nav-btn warn" onclick="openImport()">⬆ Імпорт XLS</button>
+    <button class="nav-btn success" onclick="openAddModal()">＋ Додати актив</button>
+    <a href="index.html" class="nav-btn">← Публічний сайт</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <h3>Категорії</h3>
+      <div class="sb-item active" onclick="loadCat('all',this)">
+        <span class="icon">📋</span> Всі активи
+        <span class="cnt" id="cnt-all">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('realestate',this)">
+        <span class="icon">🏢</span> Нерухомість
+        <span class="cnt" id="cnt-re">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('land',this)">
+        <span class="icon">🌾</span> Земельні ділянки
+        <span class="cnt" id="cnt-land">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('transport',this)">
+        <span class="icon">🚗</span> Транспорт
+        <span class="cnt" id="cnt-transport">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('corp',this)">
+        <span class="icon">📊</span> Корп. права
+        <span class="cnt" id="cnt-corp">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('money',this)">
+        <span class="icon">💰</span> Грошові кошти
+        <span class="cnt" id="cnt-money">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('movable',this)">
+        <span class="icon">📦</span> Рухоме майно
+        <span class="cnt" id="cnt-movable">—</span>
+      </div>
+      <div class="sb-item" onclick="loadCat('other',this)">
+        <span class="icon">🗂</span> Інше майно
+        <span class="cnt" id="cnt-other">—</span>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">
+      <h3>Фільтри статусу</h3>
+      <div class="sb-item" onclick="filterStatus('arrested',this)"><span class="icon">⚖</span> Арештовано</div>
+      <div class="sb-item" onclick="filterStatus('confiscated',this)"><span class="icon">✅</span> Конфісковано</div>
+      <div class="sb-item" onclick="filterStatus('national',this)"><span class="icon">🏛</span> Націоналізовано</div>
+      <div class="sb-item" onclick="filterStatus('cancelled',this)"><span class="icon">❌</span> Скасовано</div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">
+      <h3>Операції з даними</h3>
+      <div class="sb-item" onclick="exportXLSX()"><span class="icon">📥</span> Експорт в Excel</div>
+      <div class="sb-item" onclick="openImport()"><span class="icon">📤</span> Імпорт з Excel</div>
+      <div class="sb-item" onclick="downloadTemplate()"><span class="icon">📋</span> Шаблон XLS</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main" id="main-area">
+    <!-- Stats row -->
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card"><div class="stat-lbl">Всього</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">активів</div></div>
+      <div class="stat-card"><div class="stat-lbl">Арештовано</div><div class="stat-val" style="color:#e86c19" id="s-arr">—</div><div class="stat-sub">активних</div></div>
+      <div class="stat-card"><div class="stat-lbl">З управителем</div><div class="stat-val" style="color:#0e9f6e" id="s-mgr">—</div><div class="stat-sub">об'єктів</div></div>
+      <div class="stat-card"><div class="stat-lbl">Відображено</div><div class="stat-val" style="color:#1e50dc" id="s-shown">—</div><div class="stat-sub">у таблиці</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" type="text" id="search" placeholder="Пошук по ID, адресі, власнику, опису, кадастровому номеру..." oninput="onSearch(this.value)">
+      </div>
+      <select class="filter-sel" id="arr-filter" onchange="applyFilters()">
+        <option value="">Всі стани арешту</option>
+        <option value="arrested">Арештовано</option>
+        <option value="confiscated">Конфісковано</option>
+        <option value="national">Націоналізовано</option>
+        <option value="cancelled">Скасовано</option>
+        <option value="notarr">Не арештовано</option>
+      </select>
+      <select class="filter-sel" id="cmplx-filter" onchange="applyFilters()">
+        <option value="">Всі типи складності</option>
+        <option value="simple">Прості</option>
+        <option value="complex">Складні</option>
+      </select>
+      <select class="filter-sel" id="mgr-filter" onchange="applyFilters()">
+        <option value="">З/без управителя</option>
+        <option value="yes">З управителем</option>
+        <option value="no">Без управителя</option>
+      </select>
+      <div class="per-page">
+        Рядків: <select id="per-page" onchange="PS=+this.value;curPage=0;render()">
+          <option value="25">25</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+          <option value="250">250</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('id')">ID <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('type')">Вид активу <span class="sort-icon">↕</span></th>
+            <th>Опис</th>
+            <th onclick="sortBy('addr')">Адреса <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('arr')">Стан <span class="sort-icon">↕</span></th>
+            <th>Складність</th>
+            <th>Управитель</th>
+            <th>Дія</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <span id="pgn-info"></span>
+      <div class="pgn-btns" id="pgn-btns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT/ADD MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Редагувати актив</h3>
+      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="edit-form" onsubmit="return false">
+        <div class="form-grid">
+          <div class="field"><label>ID Активу <span class="req">*</span></label><input id="f-id" required placeholder="350/0102/2020"></div>
+          <div class="field"><label>Тип активу</label>
+            <select id="f-asset-type">
+              <option value="Нерухомість">Нерухомість</option>
+              <option value="Земельна ділянка">Земельна ділянка</option>
+              <option value="Транспорт">Транспорт</option>
+              <option value="Корп. права">Корп. права</option>
+              <option value="Грошові активи та банківські метали">Грошові кошти та метали</option>
+              <option value="Інше рухоме майно">Інше рухоме майно</option>
+              <option value="Інше майно">Інше майно</option>
+            </select>
+          </div>
+          <div class="field form-full"><label>Вид активу <span class="req">*</span></label><input id="f-type" required placeholder="Офісна нерухомість, торговельна нерухомість..."></div>
+          <div class="field form-full"><label>Опис активу <span class="req">*</span></label><textarea id="f-desc" required rows="4" placeholder="Повний текстовий опис активу з реєстру..."></textarea></div>
+
+          <div class="field"><label>Область</label><input id="f-oblast" placeholder="Харківська область"></div>
+          <div class="field"><label>Район</label><input id="f-district" placeholder="Київо-Святошинський район"></div>
+          <div class="field"><label>Місто/НП</label><input id="f-city" placeholder="Харків"></div>
+          <div class="field"><label>Тип НП</label>
+            <select id="f-stype"><option value="м.">м. (місто)</option><option value="с.">с. (село)</option><option value="смт.">смт.</option></select>
+          </div>
+          <div class="field"><label>Тип вулиці</label>
+            <select id="f-sttype"><option value="вул.">вул. (вулиця)</option><option value="пров.">пров. (провулок)</option><option value="просп.">просп. (проспект)</option><option value="бул.">бул. (бульвар)</option><option value="наб.">наб. (набережна)</option><option value="пл.">пл. (площа)</option><option value="шосе">шосе</option><option value="">Інше / без типу</option></select>
+          </div>
+          <div class="field"><label>Назва вулиці</label><input id="f-street" placeholder="Ганни, Хрещатик..."></div>
+          <div class="field"><label>Будинок</label><input id="f-house" placeholder="13/23, 7-А..."></div>
+          <div class="field"><label>Квартира</label><input id="f-apt" placeholder="26"></div>
+          <div class="field"><label>Кадастровий номер</label><input id="f-kad" placeholder="3220881700:05:003:1659" pattern="\d{10}:\d{2}:\d{3}:\d{4}"></div>
+
+          <div class="field"><label>Стан арешту</label>
+            <select id="f-arr">
+              <option value="Арештовано">Арештовано</option>
+              <option value="Стягнення в дохід держави">Стягнення / Конфіскація</option>
+              <option value="Спеціальна конфіскація">Спеціальна конфіскація</option>
+              <option value="Націоналізація">Націоналізація</option>
+              <option value="Скасування передачі ">Скасовано</option>
+              <option value="Не арештовано">Не арештовано</option>
+            </select>
+          </div>
+          <div class="field"><label>Складність</label>
+            <select id="f-cmplx"><option value="Простий">Простий</option><option value="Складний">Складний (Композитний)</option></select>
+          </div>
+          <div class="field"><label>Власник</label><input id="f-own" placeholder="ТОВ 'Назва', ФОП Прізвище І.Б...."></div>
+          <div class="field"><label>Управитель</label><input id="f-mgr" placeholder="ПрАТ 'Управляюча компанія'..."></div>
+          <div class="field"><label>Вартість</label><input id="f-val" type="number" placeholder="1500000"></div>
+          <div class="field"><label>Валюта</label>
+            <select id="f-cur"><option value="грн">грн</option><option value="USD">USD</option><option value="EUR">EUR</option></select>
+          </div>
+          <div class="field"><label>Відділ МА</label><input id="f-dept" placeholder="2 відділ МА"></div>
+          <div class="field"><label>МТУ</label><input id="f-mtu" placeholder="Північно-східне МТУ"></div>
+          <div class="field"><label>Дата рішення</label><input id="f-date" type="date"></div>
+          <div class="field"><label>Зонування</label><input id="f-zone" placeholder="Червона зона, Жовта зона..."></div>
+          <div class="field form-full"><label>Судові рішення</label><textarea id="f-court" rows="3" placeholder="Ухвала суду № ...; постанова ..."></textarea></div>
+          <div class="field form-full"><label>Використання / стан</label><input id="f-usage" placeholder="використовується / не використовується / частково..."></div>
+
+          <!-- Coordinates (auto or manual) -->
+          <div class="field"><label>Широта (lat)</label><input id="f-lat" type="number" step="0.00001" placeholder="49.99352" min="44" max="53"></div>
+          <div class="field"><label>Довгота (lng)</label><input id="f-lng" type="number" step="0.00001" placeholder="36.23677" min="22" max="40"></div>
+          <div class="field form-full">
+            <div class="hint">💡 Якщо залишити координати порожніми — вони будуть визначені автоматично за назвою міста при завантаженні карти.</div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('edit-modal')">Скасувати</button>
+      <button class="btn prim" onclick="saveRecord()">💾 Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <h3>📤 Імпорт з Excel / CSV</h3>
+      <button class="modal-close" onclick="closeModal('import-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="onFileDrop(event)">
+        <div class="iz-icon">📂</div>
+        <h4>Перетягніть файл або натисніть для вибору</h4>
+        <p>Підтримуються формати: .xlsx, .xls, .csv<br>Завантажте спочатку <b>Шаблон XLS</b> щоб побачити потрібні колонки</p>
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="onFileSelect(this)">
+        <div class="upload-progress" id="up-progress"><div class="upload-progress-fill" id="up-fill"></div></div>
+      </div>
+      <div id="import-preview" style="margin-top:14px;display:none">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">Попередній перегляд:</div>
+        <div id="import-table" style="overflow:auto;max-height:200px;border:1px solid var(--dim);border-radius:var(--r);font-size:11px"></div>
+        <div id="import-summary" style="margin-top:8px;font-size:12px;color:var(--mid)"></div>
+      </div>
+      <div style="margin-top:16px;padding:12px;background:rgba(217,119,6,.07);border-radius:var(--r);border:1.5px solid rgba(217,119,6,.2)">
+        <div style="font-size:12px;color:var(--amber);font-weight:600;margin-bottom:4px">⚠ Важливо</div>
+        <div style="font-size:11.5px;color:var(--ink3);line-height:1.6">
+          Імпорт <b>доповнює</b> наявні записи (не перезаписує).<br>
+          Якщо ID активу вже існує в базі — запис буде <b>оновлено</b>.<br>
+          Нові записи будуть <b>додані</b> до кінця бази.
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('import-modal')">Скасувати</button>
+      <button class="btn warn" onclick="downloadTemplate()">📋 Шаблон XLS</button>
+      <button class="btn prim" id="import-confirm-btn" onclick="confirmImport()" disabled>⬆ Імпортувати</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <h3>🗑 Видалити актив?</h3>
+    <p id="confirm-text">Ви впевнені, що хочете видалити цей запис? Дію неможливо скасувати.</p>
+    <div class="confirm-btns">
+      <button class="btn" onclick="closeModal('confirm-modal')">Скасувати</button>
+      <button class="btn danger" id="confirm-yes-btn">Так, видалити</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ADMIN PANEL — app logic
+// ═══════════════════════════════════════════════════════════════
+
+// Storage key for admin DB (localStorage)
+const DB_KEY = 'arma_admin_db_v2';
+const DB_META_KEY = 'arma_admin_meta_v2';
+
+// In-memory database
+let DB = {}; // category -> [{...records...}]
+let STATS = {};
+let currentCat = 'all';
+let currentStatus = '';
+let searchQ = '';
+let arrF = '', cmplxF = '', mgrF = '';
+let curPage = 0;
+let PS = 50;
+let sortCol = 'id';
+let sortDir = 1;
+let pendingImport = null;
+let editingId = null;
+
+const CATS = ['realestate','land','transport','corp','money','movable','other'];
+const CAT_LABELS = {realestate:'Нерухомість',land:'Земельні ділянки',transport:'Транспорт',corp:'Корп. права',money:'Грошові кошти',movable:'Рухоме майно',other:'Інше майно'};
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = (type==='ok'?'✓':type==='err'?'✗':'ℹ') + ' ' + msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.style.opacity='0', 3200);
+  setTimeout(()=>el.remove(), 3500);
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────────
+async function loadAll() {
+  // Check localStorage first
+  const cached = localStorage.getItem(DB_KEY);
+  if (cached) {
+    DB = JSON.parse(cached);
+    toast('База даних завантажена з кешу браузера', 'info');
+  } else {
+    // Load from JSON files
+    toast('Завантаження даних з сервера...', 'info');
+    for (const cat of CATS) {
+      try {
+        const r = await fetch(`${cat}.json`);
+        if (r.ok) DB[cat] = await r.json();
+        else DB[cat] = [];
+      } catch(e) { DB[cat] = []; }
+    }
+    saveDB();
+    toast('Дані завантажено і збережено в браузері', 'ok');
+  }
+  try {
+    const sr = await fetch('stats.json');
+    if (sr.ok) STATS = await sr.json();
+  } catch(e){}
+  updateStats();
+  updateSidebarCounts();
+  render();
+}
+
+function saveDB() {
+  localStorage.setItem(DB_KEY, JSON.stringify(DB));
+}
+
+// ── GET ALL RECORDS ───────────────────────────────────────────
+function getAllRecords() {
+  if (currentCat === 'all') return CATS.flatMap(c => (DB[c]||[]).map(r=>({...r, _cat:c})));
+  return (DB[currentCat]||[]).map(r=>({...r, _cat:currentCat}));
+}
+
+function getFiltered() {
+  let data = getAllRecords();
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    data = data.filter(r => [r.id,r.addr,r.city,r.oblast,r.own,r.desc,r.kadastr,r.manager,r.type]
+      .filter(Boolean).join(' ').toLowerCase().includes(q));
+  }
+  if (arrF) data = data.filter(r => arrType(r.arr) === arrF);
+  if (cmplxF) data = data.filter(r => r.complex === cmplxF);
+  if (mgrF === 'yes') data = data.filter(r => r.has_manager);
+  if (mgrF === 'no')  data = data.filter(r => !r.has_manager);
+  if (currentStatus) data = data.filter(r => arrType(r.arr) === currentStatus);
+  return data;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function arrType(s) {
+  if(!s) return 'u';
+  s=s.toLowerCase();
+  if(s.includes('конфіскац')||s.includes('стягнення')) return 'c';
+  if(s.includes('нац')) return 'n';
+  if(s.includes('арештовано')) return 'a';
+  if(s.includes('скасування')) return 'x';
+  if(s.includes('не арешт')) return 'z';
+  return 'u';
+}
+const ARR_LBL={a:'Арешт',c:'Конфіск.',n:'Націонал.',x:'Скасовано',z:'Не арешт.',u:'—'};
+const ARR_B={a:'ba',c:'bc',n:'bn',x:'bx',u:'bz',z:'bz'};
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(n){ return Number(n||0).toLocaleString('uk-UA'); }
+
+// ── SORT ──────────────────────────────────────────────────────
+function sortBy(col) {
+  if(sortCol===col) sortDir*=-1; else {sortCol=col;sortDir=1;}
+  curPage=0; render();
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────
+function render() {
+  const filtered = getFiltered();
+  // Sort
+  filtered.sort((a,b) => {
+    const va = String(a[sortCol]||'').toLowerCase();
+    const vb = String(b[sortCol]||'').toLowerCase();
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+
+  const total = filtered.length;
+  const pages = Math.ceil(total/PS);
+  const start = curPage*PS;
+  const items = filtered.slice(start, start+PS);
+
+  document.getElementById('s-shown').textContent = fmt(total);
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = items.map(r => `
+    <tr>
+      <td class="td-id">${esc(r.id)}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--mid)">${esc((r.type||r.asset_type||'').slice(0,50))}</td>
+      <td class="td-desc">${esc((r.desc||'').slice(0,80))}${(r.desc||'').length>80?'…':''}</td>
+      <td class="td-addr">${esc(r.addr||r.city||'—')}</td>
+      <td><span class="badge ${ARR_B[arrType(r.arr)]}">${ARR_LBL[arrType(r.arr)]}</span></td>
+      <td><span class="badge" style="background:rgba(0,0,0,.05);color:var(--mid)">${r.complex==='simple'?'Простий':r.complex==='complex'?'Складний':'—'}</span></td>
+      <td style="font-size:11px;color:${r.has_manager?'var(--green)':'var(--muted)'}">${r.has_manager?'✓ Є':'—'}</td>
+      <td class="td-actions">
+        <button class="ta-btn edit" onclick="openEdit('${esc(r.id)}','${r._cat||currentCat}')">✏ Редаг.</button>
+        <button class="ta-btn del" onclick="confirmDelete('${esc(r.id)}','${r._cat||currentCat}')">🗑</button>
+      </td>
+    </tr>`).join('');
+
+  // Pagination
+  document.getElementById('pgn-info').textContent = `Показано ${fmt(start+1)}–${fmt(Math.min(start+PS,total))} з ${fmt(total)}`;
+  const pgn = document.getElementById('pgn-btns');
+  pgn.innerHTML = `
+    <button class="pgn-btn" ${curPage===0?'disabled':''} onclick="curPage=0;render()">«</button>
+    <button class="pgn-btn" ${curPage===0?'disabled':''} onclick="curPage--;render()">‹</button>
+    <span style="padding:0 10px;font-size:12px;color:var(--mid)">${curPage+1} / ${Math.max(1,pages)}</span>
+    <button class="pgn-btn" ${curPage>=pages-1?'disabled':''} onclick="curPage++;render()">›</button>
+    <button class="pgn-btn" ${curPage>=pages-1?'disabled':''} onclick="curPage=${Math.max(0,pages-1)};render()">»</button>`;
+}
+
+// ── STATS & SIDEBAR ───────────────────────────────────────────
+function updateStats() {
+  const all = CATS.flatMap(c => DB[c]||[]);
+  document.getElementById('s-total').textContent = fmt(all.length);
+  document.getElementById('s-arr').textContent = fmt(all.filter(r=>arrType(r.arr)==='a').length);
+  document.getElementById('s-mgr').textContent = fmt(all.filter(r=>r.has_manager).length);
+}
+
+function updateSidebarCounts() {
+  const all = CATS.flatMap(c => DB[c]||[]);
+  document.getElementById('cnt-all').textContent = fmt(all.length);
+  CATS.forEach(c => {
+    const el = document.getElementById('cnt-'+c.replace('realestate','re'));
+    if(el) el.textContent = fmt((DB[c]||[]).length);
+  });
+}
+
+// ── CATEGORY SWITCH ───────────────────────────────────────────
+function loadCat(cat, el) {
+  currentCat = cat;
+  currentStatus = '';
+  curPage = 0;
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('arr-filter').value = '';
+  arrF=''; cmplxF=''; mgrF='';
+  render();
+}
+
+function filterStatus(status, el) {
+  currentStatus = currentStatus===status?'':status;
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(currentStatus && el) el.classList.add('active');
+  curPage=0; render();
+}
+
+// ── SEARCH & FILTERS ──────────────────────────────────────────
+let searchTimer;
+function onSearch(v) {
+  searchQ = v;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(()=>{curPage=0;render();}, 280);
+}
+function applyFilters() {
+  arrF   = document.getElementById('arr-filter').value;
+  cmplxF = document.getElementById('cmplx-filter').value;
+  mgrF   = document.getElementById('mgr-filter').value;
+  curPage=0; render();
+}
+
+// ── EDIT / ADD ────────────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = '➕ Додати новий актив';
+  document.getElementById('edit-form').reset();
+  document.getElementById('f-cur').value = 'грн';
+  document.getElementById('f-stype').value = 'м.';
+  document.getElementById('f-arr').value = 'Арештовано';
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function openEdit(id, cat) {
+  const data = DB[cat] || DB[currentCat] || [];
+  const record = data.find(r=>r.id===id);
+  if(!record) { toast('Запис не знайдено', 'err'); return; }
+  editingId = {id, cat};
+
+  document.getElementById('modal-title').textContent = `✏ Редагування: ${id}`;
+  document.getElementById('f-id').value         = record.id || '';
+  document.getElementById('f-type').value       = record.type || '';
+  document.getElementById('f-asset-type').value = record.asset_type || 'Нерухомість';
+  document.getElementById('f-desc').value       = record.desc || '';
+  document.getElementById('f-oblast').value     = record.oblast || '';
+  document.getElementById('f-district').value   = record.district || '';
+  document.getElementById('f-city').value       = record.city || '';
+  document.getElementById('f-stype').value      = record.settlement_type || 'м.';
+  document.getElementById('f-sttype').value     = record.street_type || 'вул.';
+  document.getElementById('f-street').value     = record.street || '';
+  document.getElementById('f-house').value      = record.house || '';
+  document.getElementById('f-apt').value        = record.apt || '';
+  document.getElementById('f-kad').value        = record.kadastr || '';
+  document.getElementById('f-arr').value        = record.arr || 'Арештовано';
+  document.getElementById('f-cmplx').value      = record.complex==='complex'?'Складний':'Простий';
+  document.getElementById('f-own').value        = record.own || '';
+  document.getElementById('f-mgr').value        = record.manager || '';
+  document.getElementById('f-val').value        = record.value || '';
+  document.getElementById('f-cur').value        = record.currency || 'грн';
+  document.getElementById('f-dept').value       = record.dept || '';
+  document.getElementById('f-mtu').value        = record.mtu || '';
+  document.getElementById('f-date').value       = record.date || '';
+  document.getElementById('f-zone').value       = record.zone || '';
+  document.getElementById('f-court').value      = record.court || '';
+  document.getElementById('f-usage').value      = record.usage || '';
+  document.getElementById('f-lat').value        = record.lat || '';
+  document.getElementById('f-lng').value        = record.lng || '';
+
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function saveRecord() {
+  const id = document.getElementById('f-id').value.trim();
+  if(!id) { toast('ID активу обов\'язковий!', 'err'); return; }
+
+  const cat = document.getElementById('f-asset-type').value;
+  const catKey = {
+    'Нерухомість':'realestate','Земельна ділянка':'land','Транспорт':'transport',
+    'Корп. права':'corp','Грошові активи та банківські метали':'money',
+    'Інше рухоме майно':'movable','Інше майно':'other'
+  }[cat] || 'other';
+
+  const city = document.getElementById('f-city').value.trim();
+  const oblast = document.getElementById('f-oblast').value.trim();
+  const street = document.getElementById('f-street').value.trim();
+  const house  = document.getElementById('f-house').value.trim();
+  const stype  = document.getElementById('f-sttype').value;
+
+  // Build address
+  const parts = [];
+  if(oblast) parts.push(oblast);
+  const dist = document.getElementById('f-district').value.trim();
+  if(dist) parts.push(dist);
+  if(city) { const st=document.getElementById('f-stype').value||'м.'; parts.push(`${st} ${city}`); }
+  if(street) {
+    let s = stype ? `${stype} ${street}` : street;
+    if(house) s += `, буд. ${house}`;
+    const apt = document.getElementById('f-apt').value.trim();
+    if(apt) s += `, кв. ${apt}`;
+    parts.push(s);
+  }
+  const addr = parts.join(', ');
+
+  // Build geocode query
+  const gqParts=[];
+  if(street&&house) gqParts.push(`${street} ${house}`); else if(street) gqParts.push(street);
+  if(city) gqParts.push(city);
+  else if(oblast) gqParts.push(oblast.replace(/область|обл\./g,'').trim());
+  if(gqParts.length) gqParts.push('Україна');
+
+  const cmplxVal = document.getElementById('f-cmplx').value;
+  const managerVal = document.getElementById('f-mgr').value.trim();
+
+  const record = {
+    id, group:'',
+    desc: document.getElementById('f-desc').value.trim(),
+    type: document.getElementById('f-type').value.trim(),
+    asset_type: cat,
+    complex: cmplxVal==='Складний'?'complex':'simple',
+    addr, street_type:stype, street, house,
+    apt: document.getElementById('f-apt').value.trim(),
+    city, district:dist, oblast,
+    settlement_type: document.getElementById('f-stype').value,
+    kadastr: document.getElementById('f-kad').value.trim(),
+    own: document.getElementById('f-own').value.trim(),
+    arr: document.getElementById('f-arr').value,
+    inv_status:'', manager:managerVal, has_manager:!!managerVal,
+    contract:'',
+    value: document.getElementById('f-val').value || '',
+    currency: document.getElementById('f-cur').value,
+    usage: document.getElementById('f-usage').value.trim(),
+    condition:'', dept:document.getElementById('f-dept').value.trim(),
+    mtu:document.getElementById('f-mtu').value.trim(),
+    zone:document.getElementById('f-zone').value.trim(),
+    date:document.getElementById('f-date').value,
+    court:document.getElementById('f-court').value.trim(),
+    lat: parseFloat(document.getElementById('f-lat').value) || 49.0,
+    lng: parseFloat(document.getElementById('f-lng').value) || 31.5,
+    geo_quality: document.getElementById('f-lat').value ? 'manual' : 'city',
+    gq: gqParts.join(', '), needs_geocode:!!street,
+    _modified: new Date().toISOString(),
+    _new: !editingId,
+  };
+
+  if(!DB[catKey]) DB[catKey] = [];
+
+  if(editingId) {
+    // Update existing (may be in different category)
+    const {id:eid, cat:ecat} = editingId;
+    const idx = (DB[ecat]||[]).findIndex(r=>r.id===eid);
+    if(idx>=0) {
+      DB[ecat].splice(idx,1); // remove from old cat
+    }
+    // Add to new cat
+    const newIdx = DB[catKey].findIndex(r=>r.id===id);
+    if(newIdx>=0) DB[catKey][newIdx]=record;
+    else DB[catKey].push(record);
+    toast(`Запис ${id} оновлено ✓`, 'ok');
+  } else {
+    // Check duplicate
+    const exists = CATS.some(c=>(DB[c]||[]).some(r=>r.id===id));
+    if(exists) { toast(`Запис з ID ${id} вже існує!`, 'err'); return; }
+    DB[catKey].push(record);
+    toast(`Запис ${id} додано ✓`, 'ok');
+  }
+
+  saveDB();
+  updateStats();
+  updateSidebarCounts();
+  closeModal('edit-modal');
+  render();
+}
+
+// ── DELETE ────────────────────────────────────────────────────
+function confirmDelete(id, cat) {
+  document.getElementById('confirm-text').innerHTML = `Видалити актив <b>${id}</b>?<br><span style="font-size:11px;color:var(--muted)">Категорія: ${CAT_LABELS[cat]||cat}</span>`;
+  document.getElementById('confirm-yes-btn').onclick = () => {
+    deleteRecord(id, cat);
+    closeModal('confirm-modal');
+  };
+  document.getElementById('confirm-modal').classList.add('show');
+}
+
+function deleteRecord(id, cat) {
+  if(!DB[cat]) return;
+  const idx = DB[cat].findIndex(r=>r.id===id);
+  if(idx>=0) DB[cat].splice(idx,1);
+  saveDB();
+  updateStats();
+  updateSidebarCounts();
+  toast(`Запис ${id} видалено`, 'ok');
+  render();
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────────
+function exportXLSX() {
+  toast('Формування Excel файлу...', 'info');
+  const wb = XLSX.utils.book_new();
+
+  // All records sheet
+  const allData = CATS.flatMap(c => (DB[c]||[]).map(r=>({
+    'ID Активу': r.id,
+    'Тип активу': r.asset_type || '',
+    'Вид активу': r.type || '',
+    'Опис': r.desc || '',
+    'Повна адреса': r.addr || '',
+    'Область': r.oblast || '',
+    'Район': r.district || '',
+    'Місто/НП': r.city || '',
+    'Тип НП': r.settlement_type || '',
+    'Тип вулиці': r.street_type || '',
+    'Вулиця': r.street || '',
+    'Будинок': r.house || '',
+    'Квартира': r.apt || '',
+    'Кадастровий номер': r.kadastr || '',
+    'Стан арешту': r.arr || '',
+    'Складність': r.complex==='complex'?'Складний':'Простий',
+    'Власник': r.own || '',
+    'Управитель': r.manager || '',
+    'Вартість': r.value || '',
+    'Валюта': r.currency || '',
+    'Використання': r.usage || '',
+    'Відділ МА': r.dept || '',
+    'МТУ': r.mtu || '',
+    'Дата рішення': r.date || '',
+    'Зонування': r.zone || '',
+    'Судові рішення': r.court || '',
+    'Широта': r.lat || '',
+    'Довгота': r.lng || '',
+  })));
+
+  const ws = XLSX.utils.json_to_sheet(allData);
+  ws['!cols'] = [{wch:20},{wch:18},{wch:30},{wch:50},{wch:50},{wch:25},{wch:25},{wch:20},{wch:8},{wch:8},{wch:20},{wch:10},{wch:8},{wch:22},{wch:30},{wch:12},{wch:40},{wch:40},{wch:15},{wch:8},{wch:20},{wch:15},{wch:25},{wch:12},{wch:15},{wch:40},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Всі активи');
+
+  // Per-category sheets
+  CATS.forEach(c => {
+    if(!DB[c]||!DB[c].length) return;
+    const ws2 = XLSX.utils.json_to_sheet(DB[c].map(r=>({'ID':r.id,'Вид':r.type||'','Опис':(r.desc||'').slice(0,300),'Адреса':r.addr||'','Кадастр':r.kadastr||'','Стан':r.arr||'','Власник':r.own||'','Управитель':r.manager||'',' Вартість':r.value||''})));
+    XLSX.utils.book_append_sheet(wb, ws2, CAT_LABELS[c]||c);
+  });
+
+  const dt = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `ARMA_Реєстр_${dt}.xlsx`);
+  toast('Excel файл завантажено ✓', 'ok');
+}
+
+// ── TEMPLATE ──────────────────────────────────────────────────
+function downloadTemplate() {
+  const wb = XLSX.utils.book_new();
+  const cols = ['ID Активу','Тип активу','Вид активу','Опис','Область','Район','Місто/НП','Тип НП','Тип вулиці','Вулиця','Будинок','Квартира','Кадастровий номер','Стан арешту','Складність','Власник','Управитель','Вартість','Валюта','Використання','Відділ МА','МТУ','Дата рішення','Зонування','Судові рішення','Широта','Довгота'];
+  const example = [
+    ['350/0102/2024','Нерухомість','Офісна нерухомість','Нежитлове приміщення за адресою…','Харківська область','Харківський район','Харків','м.','вул.','Ганни','13/23','','','Арештовано','Простий','ТОВ "Ромашка"','ПрАТ "Управляюча компанія"','500000','грн','використовується','2 відділ МА','Північно-Східне МТУ','2020-07-27','','ухвала 752/19045/17','49.99352','36.23677'],
+    ['351/0102/2024','Земельна ділянка','Сільськогосподарські угіддя','Земельна ділянка кадастровий номер 3220881700:05:003:1659','Київська область','Обухівський район','Козин','м.','','','','','3220881700:05:003:1659','Арештовано','Простий','','','100000','грн','не використовується','1 відділ МА','Київське МТУ','2021-03-15','','','50.21678','30.65432'],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([cols,...example]);
+  ws['!cols'] = cols.map(()=>({wch:20}));
+  // Style header
+  XLSX.utils.book_append_sheet(wb, ws, 'Шаблон');
+
+  // Instructions sheet
+  const inst = [
+    ['Інструкція по заповненню шаблону АРМА'],[''],
+    ['ID Активу','Унікальний ідентифікатор. Формат: XXXXXXXXX/XXXX/XXXX. Обов\'язкове поле.'],
+    ['Тип активу','Значення: Нерухомість / Земельна ділянка / Транспорт / Корп. права / Грошові активи та банківські метали / Інше рухоме майно / Інше майно'],
+    ['Вид активу','Точний вид: Офісна нерухомість, Квартира, Автомобіль тощо'],
+    ['Стан арешту','Значення: Арештовано / Стягнення в дохід держави / Спеціальна конфіскація / Націоналізація / Скасування передачі  / Не арештовано'],
+    ['Складність','Простий або Складний'],
+    ['Кадастровий номер','Формат: XXXXXXXXXX:XX:XXX:XXXX (для земельних ділянок)'],
+    ['Дата рішення','Формат: РРРР-ММ-ДД'],
+    ['Широта / Довгота','GPS координати (десяткові градуси). Якщо невідомо — залишити порожніми.'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(inst);
+  ws2['!cols'] = [{wch:20},{wch:80}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Інструкція');
+
+  XLSX.writeFile(wb, 'ARMA_Шаблон_імпорту.xlsx');
+  toast('Шаблон завантажено ✓', 'ok');
+}
+
+// ── IMPORT ────────────────────────────────────────────────────
+function openImport() {
+  pendingImport = null;
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('import-confirm-btn').disabled = true;
+  document.getElementById('file-input').value = '';
+  document.getElementById('import-modal').classList.add('show');
+}
+
+function onFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if(file) processImportFile(file);
+}
+
+function onFileSelect(input) {
+  const file = input.files[0];
+  if(file) processImportFile(file);
+}
+
+function processImportFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const prog = document.getElementById('up-progress');
+  const fill = document.getElementById('up-fill');
+  prog.style.display='block'; fill.style.width='0%';
+  setTimeout(()=>fill.style.width='50%', 100);
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    fill.style.width='90%';
+    try {
+      let rows=[];
+      if(ext==='csv') {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        const headers = lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
+        rows = lines.slice(1).filter(l=>l.trim()).map(line=>{
+          const vals = line.split(',').map(v=>v.trim().replace(/"/g,''));
+          const obj={};
+          headers.forEach((h,i)=>obj[h]=vals[i]||'');
+          return obj;
+        });
+      } else {
+        const wb = XLSX.read(e.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      }
+      fill.style.width='100%';
+      setTimeout(()=>prog.style.display='none', 500);
+      previewImport(rows);
+    } catch(err) {
+      toast('Помилка читання файлу: '+err.message, 'err');
+      prog.style.display='none';
+    }
+  };
+  if(ext==='csv') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function previewImport(rows) {
+  // Map rows to records
+  const COL_MAP = {
+    'ID Активу':'id','Тип активу':'asset_type','Вид активу':'type','Опис':'desc',
+    'Область':'oblast','Район':'district','Місто/НП':'city','Тип НП':'settlement_type',
+    'Тип вулиці':'street_type','Вулиця':'street','Будинок':'house','Квартира':'apt',
+    'Кадастровий номер':'kadastr','Стан арешту':'arr','Складність':'_cmplx',
+    'Власник':'own','Управитель':'manager','Вартість':'value','Валюта':'currency',
+    'Використання':'usage','Відділ МА':'dept','МТУ':'mtu',
+    'Дата рішення':'date','Зонування':'zone','Судові рішення':'court',
+    'Широта':'_lat','Довгота':'_lng'
+  };
+
+  pendingImport = rows.map(row => {
+    const r={};
+    Object.entries(COL_MAP).forEach(([col,key])=>{ if(row[col]!==undefined) r[key]=String(row[col]||'').trim(); });
+    r.has_manager = !!(r.manager);
+    r.complex = (r._cmplx||'').toLowerCase().includes('кладн') ? 'complex' : 'simple';
+    r.lat = parseFloat(r._lat)||49.0;
+    r.lng = parseFloat(r._lng)||31.5;
+    // Build addr
+    const parts=[]; if(r.oblast) parts.push(r.oblast); if(r.district) parts.push(r.district);
+    if(r.city) parts.push(`${r.settlement_type||'м.'} ${r.city}`);
+    if(r.street){ let s=(r.street_type||'')+' '+r.street; if(r.house) s+=`, буд. ${r.house}`; if(r.apt) s+=`, кв. ${r.apt}`; parts.push(s.trim()); }
+    r.addr = parts.join(', ');
+    r.gq = [r.street&&r.house?`${r.street} ${r.house}`:r.street, r.city].filter(Boolean).join(', ') + ', Україна';
+    r.needs_geocode = !!r.street;
+    r.geo_quality = r._lat ? 'manual' : 'city';
+    r.group=''; r.contract=''; r.inv_status=''; r.condition='';
+    return r;
+  }).filter(r=>r.id);
+
+  // Preview table
+  const prevEl = document.getElementById('import-preview');
+  prevEl.style.display = 'block';
+  const firstFew = pendingImport.slice(0,5);
+  document.getElementById('import-table').innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr>${['ID','Тип','Адреса','Стан'].map(h=>`<th style="padding:5px 8px;border-bottom:1px solid #e2e8f0;background:#f8fafc;font-size:10.5px;text-align:left;color:#64748b">${h}</th>`).join('')}</tr></thead>
+    <tbody>${firstFew.map(r=>`<tr>${[r.id,r.type||'',r.addr||r.city||'',r.arr||''].map(v=>`<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+  const existing = CATS.reduce((n,c)=>(DB[c]||[]).length+n, 0);
+  const newCount = pendingImport.filter(r=>!CATS.some(c=>(DB[c]||[]).some(x=>x.id===r.id))).length;
+  const updCount = pendingImport.length - newCount;
+  document.getElementById('import-summary').innerHTML = `Знайдено рядків: <b>${pendingImport.length}</b> · Нові: <b style="color:#0e9f6e">${newCount}</b> · Оновлення: <b style="color:#d97706">${updCount}</b> (всього в базі: ${existing})`;
+  document.getElementById('import-confirm-btn').disabled = false;
+}
+
+function confirmImport() {
+  if(!pendingImport||!pendingImport.length) return;
+  const CAT_KEY_MAP={
+    'Нерухомість':'realestate','Земельна ділянка':'land','Транспорт':'transport',
+    'Корп. права':'corp','Корпоративні права':'corp',
+    'Грошові активи та банківські метали':'money',
+    'Інше рухоме майно':'movable','Інше майно':'other'
+  };
+  let added=0,updated=0;
+  pendingImport.forEach(r=>{
+    const catKey = CAT_KEY_MAP[r.asset_type] || 'other';
+    if(!DB[catKey]) DB[catKey]=[];
+    const idx = DB[catKey].findIndex(x=>x.id===r.id);
+    if(idx>=0){ DB[catKey][idx]={...DB[catKey][idx],...r}; updated++; }
+    else{ DB[catKey].push(r); added++; }
+  });
+  saveDB();
+  updateStats();
+  updateSidebarCounts();
+  closeModal('import-modal');
+  render();
+  toast(`Імпорт завершено: ${added} нових, ${updated} оновлено ✓`, 'ok');
+  pendingImport=null;
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click', e=>{ if(e.target===el) closeModal(el.id); });
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
