@@ -206,6 +206,8 @@ tr.selected td{background:rgba(30,80,220,.06)}
     <button class="nav-btn warn" onclick="openImport()">⬆ Імпорт XLS</button>
     <button class="nav-btn success" onclick="openAddModal()">＋ Додати актив</button>
     <a href="index.html" class="nav-btn">← Публічний сайт</a>
+    <button class="nav-btn" onclick="openChangePassword()" style="border-color:rgba(124,58,237,.3);color:#7c3aed">🔑 Пароль</button>
+    <button class="nav-btn danger" onclick="ADMIN_AUTH.logout()">🚪 Вийти</button>
   </div>
 </nav>
 
@@ -1076,5 +1078,228 @@ document.querySelectorAll('.modal-overlay').forEach(el=>{
 // ── INIT ──────────────────────────────────────────────────────
 loadAll();
 </script>
+
+<!-- ═══════════════════════════════════════════════════
+     CHANGE PASSWORD MODAL
+═══════════════════════════════════════════════════ -->
+<div id="pwd-modal" style="display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(11,18,32,.5);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center">
+  <div style="width:420px;background:#fff;border-radius:20px;
+    box-shadow:0 24px 64px rgba(11,18,32,.2);overflow:hidden">
+    
+    <!-- Header -->
+    <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;
+      display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#0b1220">🔑 Зміна паролю</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">Адмін-панель АРМА</div>
+      </div>
+      <button onclick="closePwdModal()" style="width:32px;height:32px;border-radius:8px;
+        border:1.5px solid #e2e8f0;background:none;font-size:16px;color:#64748b;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:24px">
+      <!-- Current password -->
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">
+          Поточний пароль
+        </label>
+        <input type="password" id="pwd-current" placeholder="Введіть поточний пароль"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e2e8f0;
+            font-size:14px;outline:none;transition:border .15s;font-family:inherit"
+          onfocus="this.style.borderColor='#1e50dc'"
+          onblur="this.style.borderColor='#e2e8f0'">
+      </div>
+      
+      <!-- New password -->
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">
+          Новий пароль <span style="color:#94a3b8;font-weight:400">(мінімум 6 символів)</span>
+        </label>
+        <div style="position:relative">
+          <input type="password" id="pwd-new" placeholder="Введіть новий пароль"
+            oninput="checkPwdStrength(this.value)"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e2e8f0;
+              font-size:14px;outline:none;transition:border .15s;font-family:inherit"
+            onfocus="this.style.borderColor='#1e50dc'"
+            onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <!-- Password strength bar -->
+        <div style="margin-top:8px">
+          <div style="height:4px;background:#f1f5f9;border-radius:2px;overflow:hidden">
+            <div id="pwd-strength-bar" style="height:100%;width:0;border-radius:2px;transition:all .3s"></div>
+          </div>
+          <div id="pwd-strength-label" style="font-size:11px;color:#94a3b8;margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- Confirm password -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">
+          Підтвердження паролю
+        </label>
+        <input type="password" id="pwd-confirm" placeholder="Повторіть новий пароль"
+          oninput="checkPwdMatch()"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e2e8f0;
+            font-size:14px;outline:none;transition:border .15s;font-family:inherit"
+          onfocus="this.style.borderColor='#1e50dc'"
+          onblur="this.style.borderColor='#e2e8f0'"
+          onkeydown="if(event.key==='Enter') submitChangePwd()">
+        <div id="pwd-match-msg" style="font-size:11px;margin-top:4px"></div>
+      </div>
+
+      <!-- Error/success message -->
+      <div id="pwd-msg" style="display:none;padding:10px 14px;border-radius:10px;
+        font-size:13px;margin-bottom:16px"></div>
+
+      <!-- Buttons -->
+      <div style="display:flex;gap:10px">
+        <button onclick="closePwdModal()"
+          style="flex:1;padding:11px;border-radius:10px;border:1.5px solid #e2e8f0;
+            background:none;font-size:14px;font-weight:600;cursor:pointer;color:#64748b;
+            font-family:inherit;transition:all .15s"
+          onmouseover="this.style.borderColor='#94a3b8'"
+          onmouseout="this.style.borderColor='#e2e8f0'">
+          Скасувати
+        </button>
+        <button id="pwd-submit-btn" onclick="submitChangePwd()"
+          style="flex:2;padding:11px;border-radius:10px;border:none;
+            background:#1e50dc;color:#fff;font-size:14px;font-weight:700;
+            cursor:pointer;font-family:inherit;transition:background .15s"
+          onmouseover="this.style.background='#1640b8'"
+          onmouseout="this.style.background='#1e50dc'">
+          💾 Змінити пароль
+        </button>
+      </div>
+
+      <!-- Help text -->
+      <div style="margin-top:16px;padding:12px;background:#f8fafc;border-radius:10px;
+        border:1px solid #f1f5f9;font-size:11.5px;color:#64748b;line-height:1.6">
+        💡 <b>Важливо:</b> пароль зберігається у вашому браузері.
+        Якщо ви хочете один пароль для всіх адміністраторів — кожен має виконати цю процедуру
+        або ви надаєте їм хеш паролю напряму.
+        <br><br>
+        🔄 Якщо забули поточний пароль — зверніться до розробника для скидання.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Password modal logic ────────────────────────────────────────
+function openChangePassword(){
+  const m = document.getElementById('pwd-modal');
+  m.style.display = 'flex';
+  document.getElementById('pwd-current').value = '';
+  document.getElementById('pwd-new').value = '';
+  document.getElementById('pwd-confirm').value = '';
+  document.getElementById('pwd-strength-bar').style.width = '0';
+  document.getElementById('pwd-strength-label').textContent = '';
+  document.getElementById('pwd-match-msg').textContent = '';
+  document.getElementById('pwd-msg').style.display = 'none';
+  setTimeout(()=>document.getElementById('pwd-current').focus(), 100);
+}
+
+function closePwdModal(){
+  document.getElementById('pwd-modal').style.display = 'none';
+}
+
+// Close on backdrop click
+document.getElementById('pwd-modal').addEventListener('click', function(e){
+  if(e.target === this) closePwdModal();
+});
+
+function checkPwdStrength(pwd){
+  const bar   = document.getElementById('pwd-strength-bar');
+  const label = document.getElementById('pwd-strength-label');
+  if(!pwd){ bar.style.width='0'; label.textContent=''; return; }
+  
+  let score = 0;
+  if(pwd.length >= 6)  score++;
+  if(pwd.length >= 10) score++;
+  if(/[A-Z]/.test(pwd)) score++;
+  if(/[0-9]/.test(pwd)) score++;
+  if(/[^A-Za-z0-9]/.test(pwd)) score++;
+
+  const levels = [
+    {pct:'20%', color:'#ef4444', text:'Дуже слабкий'},
+    {pct:'40%', color:'#f97316', text:'Слабкий'},
+    {pct:'60%', color:'#eab308', text:'Середній'},
+    {pct:'80%', color:'#22c55e', text:'Сильний'},
+    {pct:'100%',color:'#15803d', text:'Дуже сильний ✓'},
+  ];
+  const l = levels[Math.min(score-1, 4)] || {pct:'0', color:'#e2e8f0', text:''};
+  bar.style.width   = l.pct;
+  bar.style.background = l.color;
+  label.textContent = l.text;
+  label.style.color = l.color;
+}
+
+function checkPwdMatch(){
+  const n = document.getElementById('pwd-new').value;
+  const c = document.getElementById('pwd-confirm').value;
+  const m = document.getElementById('pwd-match-msg');
+  if(!c){ m.textContent=''; return; }
+  if(n === c){
+    m.textContent = '✓ Паролі співпадають';
+    m.style.color = '#16a34a';
+  } else {
+    m.textContent = '✗ Паролі не співпадають';
+    m.style.color = '#dc2626';
+  }
+}
+
+async function submitChangePwd(){
+  const current = document.getElementById('pwd-current').value;
+  const newPwd  = document.getElementById('pwd-new').value;
+  const confirm = document.getElementById('pwd-confirm').value;
+  const msg     = document.getElementById('pwd-msg');
+  const btn     = document.getElementById('pwd-submit-btn');
+
+  function showMsg(text, isError){
+    msg.style.display = 'block';
+    msg.style.background = isError ? '#fef2f2' : '#f0fdf4';
+    msg.style.border = `1px solid ${isError ? '#fecaca' : '#bbf7d0'}`;
+    msg.style.color  = isError ? '#dc2626' : '#16a34a';
+    msg.textContent  = text;
+  }
+
+  // Validate
+  if(!current){ showMsg('❌ Введіть поточний пароль', true); return; }
+  if(newPwd.length < 6){ showMsg('❌ Новий пароль: мінімум 6 символів', true); return; }
+  if(newPwd !== confirm){ showMsg('❌ Паролі не співпадають', true); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Перевірка...';
+
+  // Verify current password
+  const currentOk = await ADMIN_AUTH.login(current);
+  if(!currentOk){
+    showMsg('❌ Поточний пароль невірний', true);
+    btn.disabled = false;
+    btn.textContent = '💾 Змінити пароль';
+    document.getElementById('pwd-current').value = '';
+    document.getElementById('pwd-current').focus();
+    return;
+  }
+
+  // Set new password
+  btn.textContent = '⏳ Збереження...';
+  await ADMIN_AUTH.setPassword(newPwd);
+
+  showMsg('✅ Пароль успішно змінено! Запишіть його.', false);
+  btn.disabled = false;
+  btn.textContent = '✓ Готово';
+
+  // Auto-close after 3 seconds
+  setTimeout(()=>{
+    closePwdModal();
+    btn.textContent = '💾 Змінити пароль';
+  }, 3000);
+}
+</script>
+
 </body>
 </html>
