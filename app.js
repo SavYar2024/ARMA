@@ -1,79 +1,3 @@
-
-function exportSearchCourtPDF(caseNum){
-
-  const q=String(caseNum||'').trim();
-
-  const rows=[];
-
-  Object.entries(DATA).forEach(([cat,list])=>{
-
-    (list||[]).forEach(r=>{
-
-      const cases=(r.court_cases||[]).map(v=>String(v).trim());
-
-      if(cases.includes(q)){
-
-        rows.push({
-          id:r.id||'',
-          cat:CAT_LABELS[cat]||cat,
-          desc:r.desc||r.addr||'',
-          addr:[r.oblast,r.city,r.addr].filter(Boolean).join(', '),
-          manager:r.manager||''
-        });
-
-      }
-
-    });
-
-  });
-
-  const html=`
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <title>${q}</title>
-    <style>
-      body{font-family:Arial;padding:20px}
-      table{border-collapse:collapse;width:100%}
-      td,th{border:1px solid #ccc;padding:8px;font-size:12px;text-align:left}
-    </style>
-  </head>
-  <body>
-
-    <h2>Судова справа: ${q}</h2>
-    <div>Кількість активів: ${rows.length}</div>
-
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Категорія</th>
-        <th>Опис</th>
-        <th>Адреса</th>
-        <th>Управитель</th>
-      </tr>
-
-      ${rows.map(r=>`
-      <tr>
-        <td>${r.id}</td>
-        <td>${r.cat}</td>
-        <td>${r.desc}</td>
-        <td>${r.addr}</td>
-        <td>${r.manager}</td>
-      </tr>`).join('')}
-
-    </table>
-
-  </body>
-  </html>`;
-
-  const w=window.open('');
-  w.document.write(html);
-  w.document.close();
-
-  setTimeout(()=>w.print(),500);
-
-}
-
 /* ============================================================
    ARMA app.js v5.0
    FIXES:
@@ -120,8 +44,8 @@ const DATA_CATS = ['realestate','land','transport','corp','money','movable','oth
 // ─── STATE ───────────────────────────────────────────────────
 const ST = {
   page:'home', search:'', groupFilter:'',
-  re:    {arr:'all', cmplx:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
-  land:  {arr:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
+  re:    {arr:'all', cmplx:'all', mgr:'all', zone:'all', pg:0, ps:60},
+  land:  {arr:'all', mgr:'all', zone:'all', pg:0, ps:60},
   cards: {arr:'all', cmplx:'all', mgr:'all', zone:'all', pg:0, ps:80, key:null},
   search_q:'', search_arr:'all', search_pg:0, search_ps:50,
   cases_q:'', cases_pg:0, cases_ps:30,
@@ -158,8 +82,7 @@ function flt(data, f, grpF){
     if(f.cmplx === 'complex' && r.complex !== 'complex') return false;
     if(f.mgr   === 'yes' && !r.has_manager) return false;
     if(f.mgr   === 'no'  &&  r.has_manager) return false;
-    if(f.zone && f.zone !== 'all' && f.zone !== '' && (r.zone||'') !== f.zone) return false;
-    if(f.oblast && (r.oblast||'') !== f.oblast) return false;
+    if(f.zone  && f.zone !== 'all' && (r.zone||'') !== f.zone) return false;
     if(grpF && (r.group||'') !== grpF) return false;
     if(q){
       const hay=[r.id,r.addr,r.city,r.oblast,r.own,r.desc,r.kadastr,r.manager,r.type,r.group].filter(Boolean).join(' ').toLowerCase();
@@ -257,7 +180,7 @@ ${r.usage?`<div class="row"><span class="lbl">Використання</span><sp
 ${r.condition?`<div class="row"><span class="lbl">Фіз. стан</span><span class="val">${esc(r.condition)}</span></div>`:''}
 ${r.notes?`<div class="row"><span class="lbl">Примітки</span><span class="val">${esc(r.notes)}</span></div>`:''}
 </div>
-${r.desc?`<div class="sec"><h2>📝 Повний опис</h2><div class="desc" style="white-space:pre-wrap;word-wrap:break-word">${esc(r.desc)}</div></div>`:''}
+${r.desc?`<div class="sec"><h2>📝 Повний опис</h2><div class="desc">${esc(r.desc)}</div></div>`:''}
 ${r.court?`<div class="sec"><h2>⚖ Судові рішення</h2><div class="desc">${esc(r.court)}</div></div>`:''}
 <div class="foot">Документ сформовано автоматично · АРМА України · ${dt}</div>
 </body></html>`;
@@ -283,7 +206,7 @@ function buildDP(r, type){
   return `
 <div class="dp-top">
   <button class="dp-close" onclick="closeDP('${type}')">✕</button>
-  <div class="dp-id">${esc(r.id)}${r.group&&r.group!=='Груповано'?` · <span style="font-size:9px;color:var(--muted);font-weight:500">Пакет АРМА №${esc(r.group)}</span>`:''}</div>
+  <div class="dp-id">${esc(r.id)}${r.group&&r.group!=='Груповано'?` · <span class="dp-case-link" onclick="APP.go('cases');APP.openCase('${esc(r.group)}')">Справа №${esc(r.group)}</span>`:''}</div>
   <div class="dp-title">${esc((r.desc||r.type||'').slice(0,180))}${(r.desc||'').length>180?'…':''}</div>
   <div class="dp-badges">
     <span class="badge ${ARR_BC[arrType(r.arr)]}">${ARR_LBL[arrType(r.arr)]||'—'}</span>
@@ -347,23 +270,11 @@ ${r.notes?`<div class="dp-sec" style="background:rgba(217,119,6,.05);border-colo
   <h4>📌 Пропозиції / Стан активу</h4>
   <p class="dp-desc">${esc(r.notes)}</p>
 </div>`:''}
-${(r.court_cases&&r.court_cases.length)||(r.primary_verdict)?`<div class="dp-sec" style="background:rgba(26,86,219,.04);border-color:rgba(26,86,219,.15)">
-  <h4>⚖ Юридичний контекст</h4>
-  ${r.primary_verdict?`<div class="dp-row"><span class="dp-l">Вердикт</span>
-    <span class="dp-v bold" style="color:#1a56db">${esc(r.primary_verdict)}</span></div>`:''}
-  ${r.court_cases&&r.court_cases.length?`<div class="dp-row"><span class="dp-l">Справи (${r.court_cases.length})</span>
-    <span class="dp-v">
-      ${r.court_cases.length===1
-        ? `<span class="court-case-pill" onclick="APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase('${r.court_cases[0].replace(/'/g,"\'")}')})">${esc(r.court_cases[0])}</span>`
-        : `<select class="oblast-select" style="margin-top:4px;font-family:'DM Mono',monospace;font-size:11px"
-            onchange="if(this.value)APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase(this.value);this.value=''})">
-            <option value="">— Оберіть справу (${r.court_cases.length}) —</option>
-            ${(r.court_cases||[]).map(c=>`<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('')}
-          </select>`
-      }
-    </span></div>`:''}
-  ${r.verdicts&&r.verdicts.length>1?`<div class="dp-row"><span class="dp-l">Дії в справі</span>
-    <span class="dp-v" style="font-size:10.5px">${r.verdicts.join(' · ')}</span></div>`:''}
+${r.court_cases&&r.court_cases.length?`<div class="dp-sec">
+  <h4>⚖ Номери судових справ</h4>
+  <div style="display:flex;gap:5px;flex-wrap:wrap">
+    ${(r.court_cases||[]).map(c=>`<span class="court-case-pill" onclick="APP.go('cases');APP.openCase('${c.replace(/'/g,"\'")}')">${esc(c)}</span>`).join('')}
+  </div>
 </div>`:''}`;
 }
 function closeDP(t){ document.getElementById(t==='land'?'land-detail':'re-detail').classList.remove('show'); }
@@ -408,8 +319,7 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
 
   function renderMarkers(filtered){
     cluster.clearLayers(); mById={};
-    const mapVisible = filtered.filter(r=>r.lat && r.geo_quality!=='approximate');
-    const mkrs=mapVisible.map(r=>{
+    const mkrs=filtered.map(r=>{
       const m=L.marker([r.lat,r.lng],{icon:mkIcon(r)});
       m._assetId=r.id;
       m.on('click',()=>select(r.id,false));
@@ -419,9 +329,6 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
       const popupTitle = isLand 
         ? (r.kadastr ? `📋 ${r.kadastr}` : r.type||'Земельна ділянка')
         : (r.desc||r.type||'').slice(0,80);
-      const geoLabel = r.geo_quality==='exact'?'📍 Точно':r.geo_quality==='geocoded'?'📍 Вулиця':
-                       r.geo_quality==='city'?'📍 Місто':'📍 Приблизно';
-      const legalBadge = r.primary_verdict?`<div style="font-size:9.5px;color:#1a56db;margin-top:4px">⚖ ${esc(r.primary_verdict)}</div>`:'';
       m.bindPopup(`
         <div class="lp-id">${esc(r.id)}</div>
         <div class="lp-title">${esc(popupTitle)}${!isLand&&(r.desc||'').length>80?'…':''}</div>
@@ -429,14 +336,9 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
         <div class="lp-addr">📍 ${esc(popupAddr)}</div>
         ${!isLand&&r.kadastr?`<div style="font-family:monospace;font-size:9.5px;color:#0e7490;margin:3px 0">📋 ${esc(r.kadastr)}</div>`:''}
         ${isLand&&r.purpose?`<div style="font-size:9.5px;color:var(--mid);margin:2px 0">${esc(r.purpose.slice(0,60))}</div>`:''}
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
-          <span class="badge ${ARR_BC[arrType(r.arr)]}">${ARR_LBL[arrType(r.arr)]}</span>
-          ${r.zone?`<span class="zone-pill zone-${r.zone.includes('Жовт')?'yellow':r.zone.includes('Черв')?'red':r.zone.includes('Синя')?'blue':'grey'}" style="font-size:9px">${r.zone.replace(' зона','')}</span>`:''}
-        </div>
-        ${legalBadge}
-        <div style="margin-top:7px;font-size:9px;color:var(--muted)">${geoLabel}</div>
-        <br><span class="lp-link" onclick="${type==='re'?'REMAP':'LANDMAP'}.select('${r.id}',false)">→ Відкрити картку</span>
-      `,{maxWidth:340,className:'arma-popup'});
+        <span class="badge ${ARR_BC[arrType(r.arr)]}">${ARR_LBL[arrType(r.arr)]}</span>
+        <br><br><span class="lp-link" onclick="${type==='re'?'REMAP':'LANDMAP'}.select('${r.id}',false)">→ Відкрити картку</span>
+      `,{maxWidth:320,className:'arma-popup'});
       mById[r.id]=m;
       return m;
     });
@@ -456,7 +358,7 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
       html+=`<div class="asset-item ${r.id===selId?'selected':''}" data-id="${esc(r.id)}" onclick="${type==='re'?'REMAP':'LANDMAP'}.select('${esc(r.id)}',true)">
         <div class="ai-id">
           <span>${esc(r.id)}</span>
-          ${r.group&&r.group!=='Груповано'?`<span class="ai-group" title="Внутрішній пакет АРМА №${esc(r.group)}">Пак.${esc(r.group)}</span>`:''}
+          ${r.group&&r.group!=='Груповано'?`<span class="ai-group" onclick="event.stopPropagation();APP.go('cases');APP.openCase('${esc(r.group)}')">№${esc(r.group)}</span>`:''}
           ${type==='land'&&r.kadastr?`<span class="ai-kad">${r.kadastr.slice(-8)}</span>`:''}
         </div>
         <div class="ai-title">${esc((r.desc||r.type||'').slice(0,100))}${(r.desc||'').length>100?'…':''}</div>
@@ -487,21 +389,8 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
     const ff=f();
     const data=CACHE[cacheKey]||[];
     const filtered=flt(data,ff,ST.groupFilter);
-    _populateOblastDropdown(data, ff.oblast||'');
     renderList(filtered); renderMarkers(filtered);
     updFbtns(document.getElementById(sidebarId),ff);
-  }
-  
-  function _populateOblastDropdown(data, selectedOblast){
-    const selId = type==='re' ? 're-oblast-filter' : 'land-oblast-filter';
-    const sel = document.getElementById(selId);
-    if(!sel) return;
-    // Only repopulate if empty or on first load
-    if(sel.options.length > 1 && sel._data_loaded) return;
-    const oblasts = [...new Set(data.map(r=>r.oblast).filter(Boolean))].sort();
-    sel.innerHTML = '<option value="">— Всі області —</option>' +
-      oblasts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}"${o===selectedOblast?' selected':''}>${o}</option>`).join('');
-    sel._data_loaded = true;
   }
 
   async function loadKad(kad,lat,lng){
@@ -542,12 +431,9 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
     if(hlM){try{map.removeLayer(hlM);}catch(e){} hlM=null;}
     const _lat = r._lat||r.lat;
     const _lng = r._lng||r.lng;
-    // If we have coords - fly to them; otherwise just show the detail panel
-    if(_lat && _lng) {
-      const _zoom = r.geo_quality==='exact'?17:r.geo_quality==='geocoded'?16:
-                    r.geo_quality==='city'?14:r.geo_quality==='district'?13:11;
-      map.flyTo([_lat,_lng], _zoom, {duration:.8, easeLinearity:.5});
-    }
+    // Zoom level based on coord accuracy
+    const _zoom = r.geo_quality==='exact'?17:r.geo_quality==='geocoded'?16:r.geo_quality==='city'?14:12;
+    map.flyTo([_lat,_lng], _zoom, {duration:.7});
     hlM=L.marker([r.lat,r.lng],{icon:mkIcon(r,true),zIndexOffset:2000}).addTo(map).bindPopup(`
       <div class="lp-id">${esc(r.id)}</div>
       <div class="lp-addr">📍 ${esc(r.addr||r.city||'—')}</div>
@@ -584,11 +470,10 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
     const r=(CACHE[cacheKey]||[]).find(x=>x.id===id);
     if(!r) return;
     const lat = r._lat||r.lat, lng = r._lng||r.lng;
-    if(!lat) { alert('Точні координати відсутні для цього об\'єкта'); return; }
-    const zoom = r.geo_quality==='exact'?17:r.geo_quality==='geocoded'?16:
-                 r.geo_quality==='city'?15:r.geo_quality==='district'?13:11;
-    map.flyTo([lat,lng],zoom,{duration:.9,easeLinearity:.4});
-    setTimeout(()=>{ if(hlM) hlM.openPopup(); },1000);
+    const zoom = r.geo_quality==='exact'||r.geo_quality==='geocoded' ? 17 : 14;
+    map.flyTo([lat,lng],zoom,{duration:.8});
+    // Open the highlight marker popup
+    setTimeout(()=>{ if(hlM) hlM.openPopup(); },900);
   }
   function pgChange(d){
     const ff=f(); ff.pg=Math.max(0,ff.pg+d);
@@ -596,8 +481,7 @@ function makeMapModule(mapId, cacheKey, listId, cntId, pgnId, sidebarId, detailI
   }
   function filter(btn){ const ff=f(); ff[btn.dataset.f]=btn.dataset.v; ff.pg=0; render(); }
 
-  return {init:initMap,render,select,focusMk,pgChange,filter,getMap:()=>map,
-    filterOblast:(val)=>{ const ff=f(); ff.oblast=val; ff.pg=0; render(); }};
+  return {init:initMap,render,select,focusMk,pgChange,filter,getMap:()=>map};
 }
 
 const REMAP   = makeMapModule('map',      'realestate.json','re-list',  're-cnt',  're-pgn',  're-sidebar',  're-detail',  're');
@@ -617,7 +501,7 @@ const CARDS=(()=>{
       <div class="card-expand" id="ce-${esc(r.id)}">
         <div class="ce-head">
           <div>
-            <div class="dp-id">${esc(r.id)}${r.group&&r.group!=='Груповано'?` · <span style="font-size:9px;color:var(--muted);font-weight:500">Пакет АРМА №${esc(r.group)}</span>`:''}</div>
+            <div class="dp-id">${esc(r.id)}${r.group&&r.group!=='Груповано'?` · <span class="dp-case-link" onclick="APP.go('cases');APP.openCase('${esc(r.group)}')">Справа №${esc(r.group)}</span>`:''}</div>
             <div class="dp-title">${esc((r.desc||r.type||'').slice(0,200))}${(r.desc||'').length>200?'…':''}</div>
             <div class="dp-badges">
               <span class="badge ${ARR_BC[arrType(r.arr)]}">${ARR_LBL[arrType(r.arr)]||'—'}</span>
@@ -685,7 +569,7 @@ const CARDS=(()=>{
       return `
         <div class="card-item ${isExp?'selected':''}" onclick="CARDS.expand('${esc(r.id)}')">
           <button class="ci-pdf-btn" onclick="event.stopPropagation();downloadPDF('${esc(r.id)}','${k}')" title="PDF">📄</button>
-          <div class="ci-id"><span>${esc(r.id)}</span>${r.group&&r.group!=='Груповано'?`<span class="ai-group" title="Внутрішній пакет АРМА №${esc(r.group)}">Пак.${esc(r.group)}</span>`:''}</div>
+          <div class="ci-id"><span>${esc(r.id)}</span>${r.group&&r.group!=='Груповано'?`<span class="ai-group" onclick="event.stopPropagation();APP.go('cases');APP.openCase('${esc(r.group)}')">№${esc(r.group)}</span>`:''}</div>
           <div class="ci-type">${esc((r.type||r.asset_type||'').slice(0,50))}</div>
           <div class="ci-title">${esc((r.desc||'—').slice(0,150))}${(r.desc||'').length>150?'…':''}</div>
           <div class="ci-meta">
@@ -797,36 +681,10 @@ const SEARCHP = {
   pgChange(d){ ST.search_pg=Math.max(0,ST.search_pg+d); renderSearchPage(); },
   clear(){ ST.search_q=''; ST.search_pg=0; renderSearchPage(); setTimeout(()=>{const el=document.getElementById('sp-input');if(el){el.value='';el.focus();}},50); },
   searchByCourt(caseNum){
-
-    const normalized=String(caseNum||'').trim();
-
-    ST.search_q=normalized;
-    ST.search_pg=0;
-    ST.expandedId=null;
-
-    const wrap=document.getElementById('search-content');
-
-    if(wrap){
-      wrap.innerHTML='';
-    }
-
-    this.go('search').then(()=>{
-
-      renderSearchPage();
-
-      setTimeout(()=>{
-
-        const el=document.getElementById('sp-input');
-
-        if(el){
-          el.value=normalized;
-          el.dispatchEvent(new Event('input',{bubbles:true}));
-        }
-
-      },100);
-
-    });
-
+    ST.search_q=caseNum; ST.search_pg=0;
+    // Search in court_cases field specifically
+    renderSearchPage();
+    setTimeout(()=>{const el=document.getElementById('sp-input');if(el)el.value=caseNum;},50);
   },
 };
 
@@ -860,35 +718,9 @@ function renderCasesPage(){
   const q=ST.cases_q.toLowerCase();
   const pg=ST.cases_pg, ps=ST.cases_ps;
   
-  function normalizeCaseSearch(v){
-    return String(v||'')
-      .toLowerCase()
-      .replace(/\s+/g,'')
-      .replace(/[–—−]/g,'-')
-      .replace(/к/g,'k')
-      .trim();
-  }
-
-  const nq=normalizeCaseSearch(q);
-
   const filtered=q?cases.filter(c=>
-
-    normalizeCaseSearch(c.id).includes(nq)
-
-    ||
-
-    c.assets.some(r=>
-
-      [r.own,r.manager,r.city,r.oblast,r.desc]
-      .some(v=>v && normalizeCaseSearch(v).includes(nq))
-
-      ||
-
-      (r.court_cases||[])
-      .some(cc=>normalizeCaseSearch(cc).includes(nq))
-
-    )
-
+    c.id.toLowerCase().includes(q)||
+    c.assets.some(r=>[r.own,r.manager,r.city,r.oblast,r.desc].some(v=>v&&v.toLowerCase().includes(q)))
   ):cases;
 
   const total=filtered.length,pages=Math.ceil(total/ps)||1;
@@ -1041,8 +873,9 @@ function renderHome(){
       ['money','#d97706','💰','Грошові кошти',s.money,'банківські рахунки'],
       ['movable','#06b6d4','📦','Рухоме майно',s.movable,'товари, обладнання'],
       ['other','#8b5cf6','🗂','Інше майно',s.other,'майнові права, ІВ'],
-      ['cases','#1a56db','⚖','Судові справи',s.total_court_cases||4007,'пошук за номером справи'],
-      ].map(([pg,cc,ic,name,cnt,sub])=>`
+      ['cases','#1a56db','📂','Справи',s.groups||83,'всі активи по справах'],
+      ['search','#d97706','🎯','🟡 Жовта зона',s.yellow||0,'перспективні для управління'],
+    ].map(([pg,cc,ic,name,cnt,sub])=>`
       <div class="cat" style="--cc:${cc}" onclick="APP.go('${pg}')">
         <div class="cat-icon">${ic}</div><div class="cat-name">${name}</div>
         <div class="cat-count">${fmt(cnt)}</div><div class="cat-sub">${sub}</div>
@@ -1085,41 +918,9 @@ function renderHome(){
 
 // ─── NAVIGATION ──────────────────────────────────────────────
 let searchTmr;
-// Load geocode cache non-blocking after page is visible
-async function _loadGeocacheBackground(){
-  try {
-    const r = await fetch('geocode_cache.json');
-    if(!r.ok) return;
-    const data = await r.json();
-    // Apply to loaded RE and Land data if available
-    const re = CACHE['realestate.json'];
-    const land = CACHE['land.json'];
-    let applied = 0;
-    for(const [q, coords] of Object.entries(data)){
-      if(!coords.lat) continue;
-      if(re) re.forEach(r=>{ if(r.gq===q && r.geo_quality!=='exact'){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
-      if(land) land.forEach(r=>{ if(r.gq===q && r.geo_quality!=='exact'){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
-    }
-    if(applied > 0) console.log(`Geocache: improved ${applied} coordinates`);
-  } catch(e){ /* silent fail */ }
-}
-
 const APP={
   async go(pageId){
-    // ── Reset state on page change ──────────────────
     ST.page=pageId; ST.groupFilter='';
-    ST.expandedId = null;            // close any open card
-    ST.search = '';                  // clear global search filter
-    // Reset page-specific filters to default
-    if(pageId==='realestate'){ ST.re.pg=0; }
-    if(pageId==='land'){ ST.land.pg=0; }
-    if(['transport','corp','money','movable','other'].includes(pageId)){ ST.cards.pg=0; ST.cards.key=pageId; }
-    // Clear nav search input
-    const si = document.getElementById('search-input');
-    if(si && pageId !== ST.page) si.value='';
-    const clr = document.getElementById('nav-clear-btn');
-    if(clr) clr.style.display='none';
-    // ── Activate page ──────────────────────────────
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===pageId));
 
@@ -1151,7 +952,8 @@ const APP={
     } else if(pageId==='cases'){
       document.getElementById('page-cases').classList.add('active');
       await loadAll();
-      if(typeof renderCasesPage==='function') renderCasesPage(); else console.warn('cases.js not loaded');
+      CASES_DATA=null;
+      renderCasesPage();
     } else {
       ST.cards.key=pageId; ST.expandedId=null;
       document.getElementById('page-cards').classList.add('active');
@@ -1167,12 +969,10 @@ const APP={
   },
 
   openCase(id){
-    // Route to cases.js CASESP2 module (real court case numbers)
-    APP.go('cases').then(()=>{
-      if(typeof CASESP2!=='undefined') CASESP2.openCase(id);
-    });
-    return; // prevent old logic below
-    void(0);
+    openCaseId=id;
+    ST.cases_q='';  // clear search, we're opening by direct ID
+    CASES_DATA=null;
+    renderCasesPage();
     setTimeout(()=>{
       const el=document.querySelector(`.case-item.open`);
       if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1185,96 +985,17 @@ const APP={
   },
 
   goToRecord(id,cat){
-
-    ST.expandedId=id;
-    ST.search_q='';
-    ST.search_pg=0;
-
-    const openCard=()=>{
-
-      const el=document.getElementById('ce-'+id);
-
-      if(el){
-
-        if(!el.classList.contains('open') && typeof el.click==='function'){
-          try{ el.click(); }catch(e){}
-        }
-
-        el.scrollIntoView({
-          behavior:'smooth',
-          block:'center'
-        });
-
-        return true;
-      }
-
-      return false;
-    };
-
     if(cat==='realestate'||cat==='land'){
-
       this.go(cat).then(()=>{
-
-        let tries=0;
-
-        const timer=setInterval(()=>{
-
-          tries++;
-
-          try{
-
-            if(cat==='realestate' && typeof REMAP!=='undefined'){
-              REMAP.select(id,true);
-            }
-
-            if(cat==='land' && typeof LANDMAP!=='undefined'){
-              LANDMAP.select(id,true);
-            }
-
-            if(openCard() || tries>15){
-              clearInterval(timer);
-            }
-
-          }catch(e){
-            if(tries>15) clearInterval(timer);
-          }
-
-        },250);
-
+        setTimeout(()=>{
+          if(cat==='realestate') REMAP.select(id,true);
+          else LANDMAP.select(id,true);
+        },200);
       });
-
-    }else{
-
-      ST.cards.key=cat;
-
-      this.go(cat).then(()=>{
-
-        let tries=0;
-
-        const timer=setInterval(()=>{
-
-          tries++;
-
-          try{
-
-            if(typeof CARDS!=='undefined'){
-              CARDS.expand(id);
-            }
-
-            if(openCard() || tries>15){
-              clearInterval(timer);
-            }
-
-          }catch(e){
-            if(tries>15) clearInterval(timer);
-          }
-
-        },250);
-
-      });
-
+    } else {
+      ST.cards.key=cat; ST.expandedId=id;
+      this.go(cat).then(()=>setTimeout(()=>CARDS.expand(id),200));
     }
-
   },
 
   onSearch(val){
@@ -1301,8 +1022,27 @@ const APP={
   },
 
   async init(){
-    // geocode_worker.js already loaded via <script> tag in HTML
-    // Just init the geocache (non-blocking, after main load)
+    // Load geocode worker
+    const geoScript = document.createElement('script');
+    geoScript.src = 'geocode_worker.js';
+    document.head.appendChild(geoScript);
+    await new Promise(res=>geoScript.onload=res);
+    // Load server geocache if available
+    if(typeof loadServerCache === 'function') {
+      loadServerCache().then(n=>{ if(n>0) console.log(`Loaded ${n} geocodes from server`); });
+    }
+    if(typeof loadGeoCache === 'function') loadGeoCache();
+    // Pre-load geocode cache from server file (blocks startup briefly but ensures accuracy)
+    try {
+      const gcResp = await fetch('geocode_cache.json');
+      if(gcResp.ok) {
+        const gcData = await gcResp.json();
+        if(typeof geoCache !== 'undefined') {
+          Object.assign(geoCache, gcData);
+          if(typeof saveGeoCache === 'function') saveGeoCache();
+        }
+      }
+    } catch(e) {}
 
     const setFill=v=>{const el=document.getElementById('ldr-fill');if(el)el.style.width=v+'%';};
     const setMsg=v=>{const el=document.getElementById('ldr-msg');if(el)el.textContent=v;};
@@ -1332,8 +1072,6 @@ const APP={
       document.getElementById('page-home').style.display='';
       document.getElementById('page-home').classList.add('active');
       renderHome();
-      // Load geocode cache in background AFTER page shows (non-blocking)
-      _loadGeocacheBackground();
     },250);
   }
 };

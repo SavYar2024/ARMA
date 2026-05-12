@@ -50,11 +50,7 @@
     <div class="sidebar" id="re-sidebar">
       <div class="sb-head">
         <div class="sb-title">Нерухомість <span class="sb-cnt" id="re-cnt">—</span></div>
-        <div class="sb-sort-label" style="display:flex;gap:6px;align-items:center">
-          <select id="re-oblast-filter" class="oblast-select" onchange="REMAP.filterOblast(this.value)">
-            <option value="">Всі області</option>
-          </select>
-        </div>
+        <div class="sb-sort-label">↕ за областями</div>
       </div>
       <div class="sb-filters">
         <div class="f-grp">
@@ -114,11 +110,7 @@
     <div class="sidebar" id="land-sidebar">
       <div class="sb-head">
         <div class="sb-title">Земельні ділянки <span class="sb-cnt" id="land-cnt">—</span></div>
-        <div style="display:flex;gap:6px;align-items:center;padding:0 14px 8px">
-          <select id="land-oblast-filter" class="oblast-select" onchange="LANDMAP.filterOblast(this.value)">
-            <option value="">Всі області</option>
-          </select>
-        </div>
+        <div class="sb-sort-label">↕ за областями · 📋 кадастр</div>
       </div>
       <div class="sb-filters">
         <div class="f-grp">
@@ -225,7 +217,5 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="app.js"></script>
-<script src="cases.js"></script>
-<script src="geocode_worker.js"></script>
 </body>
 </html>
