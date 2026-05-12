@@ -85,7 +85,7 @@ async function renderCasesPage(params={}){
   if(_casesQ){
     const ql = _casesQ.toLowerCase().trim();
     entries = entries.filter(([cn,ci])=>
-      cn.toLowerCase().includes(ql) ||
+      (cn||'').toLowerCase().includes(ql) ||
       (ci.v||'').toLowerCase().includes(ql) ||
       (ci.dt||[]).some(d=>d.includes(ql))
     );
@@ -433,3 +433,36 @@ const CASESP2 = {
     }, 300);
   },
 };
+
+
+function exportCasePDF(caseNum){
+  const assets = getCaseAssets(caseNum);
+  let html = `
+  <html>
+  <head>
+    <title>${caseNum}</title>
+    <style>
+      body{font-family:Arial;padding:20px}
+      table{border-collapse:collapse;width:100%}
+      td,th{border:1px solid #ccc;padding:6px;font-size:12px}
+    </style>
+  </head>
+  <body>
+    <h2>Судова справа: ${caseNum}</h2>
+    <table>
+      <tr><th>#</th><th>Категорія</th><th>Актив</th></tr>
+      ${assets.map((a,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td>${CAT_LABELS[a._cat]||a._cat}</td>
+          <td>${a.addr||a.desc||a.id||''}</td>
+        </tr>
+      `).join('')}
+    </table>
+  </body>
+  </html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),500);
+}

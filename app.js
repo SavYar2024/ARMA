@@ -43,7 +43,7 @@ const DATA_CATS = ['realestate','land','transport','corp','money','movable','oth
 
 // ─── STATE ───────────────────────────────────────────────────
 const ST = {
-  page:'home', search:'', groupFilter:'',
+  page:'home', search:'', groupFilter:'', lastOpenedCase:null,
   re:    {arr:'all', cmplx:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
   land:  {arr:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
   cards: {arr:'all', cmplx:'all', mgr:'all', zone:'all', pg:0, ps:80, key:null},
@@ -1158,3 +1158,12 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 </style>`);
 
 document.addEventListener('DOMContentLoaded',()=>APP.init());
+
+
+// Added fixes 2026
+function resetSearchState(){
+  ST.search='';
+  ST.search_q='';
+  ST.groupFilter='';
+  ST.expandedId=null;
+}
