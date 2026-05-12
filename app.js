@@ -202,7 +202,7 @@ function buildDP(r, type){
   const lv=r.geo_quality||'fallback';
   const geoCls=lv==='city'?'badge-geo-city':lv==='oblast'||lv==='fallback'?'badge-geo-oblast':'badge-geo-exact';
   const geoLbl=lv==='city'?'📍 Місто':lv==='city_fuzzy'?'📍 ~Місто':lv==='oblast'?'📍 Область':'📍 Приблизно';
-  const grpBtn=r.group&&r.group!=='Груповано'?`<button class="dp-btn" onclick="APP.go('cases');APP.openCase('${esc(r.group)}')">📂 Справа №${esc(r.group)}</button>`:'';
+  const grpBtn=r.group&&r.group!=='Груповано'?`<button class="dp-btn" onclick="APP.go('cases');CASESP2?.openCase('${esc(r.group)}')">📂 Справа №${esc(r.group)}</button>`:'';
 
   return `
 <div class="dp-top">
@@ -571,11 +571,11 @@ const CARDS=(()=>{
           ${r.court?`<div class="ce-sec" style="grid-column:1/-1"><h4>⚖ Судові рішення</h4><p class="dp-desc">${esc(r.court)}</p></div>`:''}
           <div class="ce-sec" style="grid-column:1/-1"><h4>📝 Повний опис</h4><p class="dp-desc">${esc(r.desc||'—')}</p></div>
           ${r.notes?`<div class="ce-sec" style="grid-column:1/-1;background:rgba(217,119,6,.05)"><h4>📌 Пропозиції / Стан активу</h4><p class="dp-desc">${esc(r.notes)}</p></div>`:''}
-          ${r.court_cases&&r.court_cases.length?`<div class="ce-sec" style="grid-column:1/-1"><h4>⚖ Номери судових справ</h4><div style="display:flex;gap:5px;flex-wrap:wrap">${(r.court_cases||[]).map(c=>`<span class="court-case-pill" onclick="APP.go('cases');APP.openCase('${c.replace(/'/g,"\'")}')">${esc(c)}</span>`).join('')}</div></div>`:''}
+          ${r.court_cases&&r.court_cases.length?`<div class="ce-sec" style="grid-column:1/-1"><h4>⚖ Номери судових справ</h4><div style="display:flex;gap:5px;flex-wrap:wrap">${(r.court_cases||[]).map(c=>`<span class="court-case-pill" onclick="APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase('${c.replace(/'/g,\"\\'\")}')})" title="Відкрити справу ${c}">${esc(c)}</span>`).join('')}</div></div>`:''}
         </div>
         <div class="ce-actions">
           <button class="dp-btn pdf-btn" onclick="downloadPDF('${esc(r.id)}','${ST.cards.key}')">📄 PDF</button>
-          ${r.group&&r.group!=='Груповано'?`<button class="dp-btn" onclick="APP.go('cases');APP.openCase('${esc(r.group)}')">📂 Справа №${esc(r.group)}</button>`:''}
+          ${r.group&&r.group!=='Груповано'?`<button class="dp-btn" onclick="APP.go('cases');CASESP2?.openCase('${esc(r.group)}')">📂 Справа №${esc(r.group)}</button>`:''}
           <span style="font-size:10.5px;color:var(--mid);margin-left:auto">ID: ${esc(r.id)}</span>
         </div>
       </div>`;
@@ -690,7 +690,7 @@ function renderSearchPage(){
           return `
             <div class="sr-item" onclick="APP.goToRecord('${esc(r.id)}','${r._cat}')">
               <div class="sr-cat-badge">${CAT_ICONS[r._cat]||'📋'} ${CAT_LABELS[r._cat]||r._cat}</div>
-              <div class="sr-id">${esc(r.id)}${r.group&&r.group!=='Груповано'?` · <span class="sr-case" onclick="event.stopPropagation();APP.go('cases');APP.openCase('${esc(r.group)}')">Справа №${esc(r.group)}</span>`:''}</div>
+              <div class="sr-id">${esc(r.id)}${r.group&&r.group!=='Груповано'?` · <span class="sr-case" onclick="event.stopPropagation();APP.go('cases');CASESP2?.openCase('${esc(r.group)}')">Справа №${esc(r.group)}</span>`:''}</div>
               <div class="sr-title">${esc((r.desc||r.type||'—').slice(0,180))}</div>
               ${loc?`<div class="sr-addr">📍 ${esc(loc)}</div>`:''}
               ${r.kadastr?`<div class="sr-kadastr">📋 ${esc(r.kadastr)}</div>`:''}
@@ -816,7 +816,7 @@ function renderCasesPage(){
                   return `<div class="case-court-numbers">
                     <div class="case-court-title">⚖ Номери судових справ (${allCourtCases.length}):</div>
                     <div class="case-court-pills">
-                      ${allCourtCases.map(cn=>`<span class="court-case-pill" onclick="SEARCHP.searchByCourt('${cn.replace(/'/g,"\'")}');APP.go('search')">${esc(cn)}</span>`).join('')}
+                      ${allCourtCases.map(cn=>`<span class="court-case-pill" onclick="APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase('${cn.replace(/'/g,\"\\'\")}')})" title="Відкрити справу">${esc(cn)}</span>`).join('')}
                     </div>
                   </div>`;
                 })()}
@@ -976,18 +976,13 @@ async function _loadGeocacheBackground(){
 const APP={
   async go(pageId){
     // ── Reset state on page change ──────────────────
-    ST.page=pageId; ST.groupFilter='';
-    ST.expandedId = null;            // close any open card
-    ST.search = '';                  // clear global search filter
-    // Reset page-specific filters to default
-    if(pageId==='realestate'){ ST.re.pg=0; }
-    if(pageId==='land'){ ST.land.pg=0; }
-    if(['transport','corp','money','movable','other'].includes(pageId)){ ST.cards.pg=0; ST.cards.key=pageId; }
+    const prevPage = ST.page;
+    ST.page=pageId; ST.groupFilter=''; ST.expandedId=null; ST.search='';
     // Clear nav search input
-    const si = document.getElementById('search-input');
-    if(si && pageId !== ST.page) si.value='';
-    const clr = document.getElementById('nav-clear-btn');
-    if(clr) clr.style.display='none';
+    const _si = document.getElementById('search-input');
+    if(_si) _si.value='';
+    const _clr = document.getElementById('nav-clear-btn');
+    if(_clr) _clr.style.display='none';
     // ── Activate page ──────────────────────────────
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===pageId));
@@ -1020,7 +1015,9 @@ const APP={
     } else if(pageId==='cases'){
       document.getElementById('page-cases').classList.add('active');
       await loadAll();
-      if(typeof renderCasesPage==='function') renderCasesPage(); else console.warn('cases.js not loaded');
+      if(typeof renderCasesPage==='function'){
+        await renderCasesPage();
+      }
     } else {
       ST.cards.key=pageId; ST.expandedId=null;
       document.getElementById('page-cards').classList.add('active');
@@ -1101,12 +1098,8 @@ const APP={
     const setFill=v=>{const el=document.getElementById('ldr-fill');if(el)el.style.width=v+'%';};
     const setMsg=v=>{const el=document.getElementById('ldr-msg');if(el)el.textContent=v;};
     try{
-      setFill(15);setMsg('Статистика...');
+      setFill(20);setMsg('Завантаження...');
       STATS=await loadJSON('stats.json');
-      setFill(40);setMsg('Нерухомість...');
-      await loadJSON('realestate.json');
-      setFill(70);setMsg('Земельні ділянки...');
-      await loadJSON('land.json');
       if(!STATS.by_arrest) STATS.by_arrest={'Арештовано':STATS.arrested,'Не арештовано':STATS.not_arrested,'Стягнення в дохід держави':STATS.confiscated,'Націоналзовано':STATS.national};
       setFill(90);setMsg('Готово!');
     }catch(e){setMsg('Помилка завантаження!');console.error(e);return;}

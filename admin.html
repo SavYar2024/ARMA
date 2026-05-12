@@ -286,11 +286,11 @@ tr.selected td{background:rgba(30,80,220,.06)}
       </div>
       <select class="filter-sel" id="arr-filter" onchange="applyFilters()">
         <option value="">Всі стани арешту</option>
-        <option value="arrested">Арештовано</option>
-        <option value="confiscated">Конфісковано</option>
-        <option value="national">Націоналізовано</option>
-        <option value="cancelled">Скасовано</option>
-        <option value="notarr">Не арештовано</option>
+        <option value="a">Арештовано</option>
+        <option value="c">Конфісковано</option>
+        <option value="n">Націоналізовано</option>
+        <option value="x">Скасовано</option>
+        <option value="z">Не арештовано</option>
       </select>
       <select class="filter-sel" id="cmplx-filter" onchange="applyFilters()">
         <option value="">Всі типи складності</option>
@@ -510,6 +510,14 @@ function toast(msg, type='ok') {
 
 // ── LOAD DATA ─────────────────────────────────────────────────
 async function loadAll() {
+  // Load stats.json for fallback counts
+  try {
+    const sr = await fetch('../stats.json');
+    if(!sr.ok) { const sr2 = await fetch('stats.json'); if(sr2.ok) STATS = await sr2.json(); }
+    else STATS = await sr.json();
+  } catch(e) {
+    try { const sr = await fetch('stats.json'); if(sr.ok) STATS = await sr.json(); } catch(e2){}
+  }
   // Check localStorage first
   const cached = localStorage.getItem(DB_KEY);
   if (cached) {
