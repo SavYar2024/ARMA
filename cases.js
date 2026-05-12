@@ -253,7 +253,7 @@ function renderCaseExpanded(cn, ci, assets){
           const val = r.value?`${fmt(parseFloat(r.value)||0)} ${r.currency||'грн'}`:'';
           const zone = r.zone?`<span class="zone-pill zone-${r.zone.includes('Жовт')?'yellow':r.zone.includes('Черв')?'red':r.zone.includes('Синя')?'blue':'grey'}" style="font-size:9px">${r.zone.replace(' зона','')}</span>`:'';
           return `
-          <div class="case-asset-item" onclick="APP.goToRecord('${esc(r.id)}','${cat}')"
+          <div class="case-asset-item" onclick="event.stopPropagation();APP.goToRecord('${esc(r.id)}','${cat}')"
             title="Відкрити картку активу">
             <div class="cai-top">
               <span class="cai-id">${esc(r.id)}</span>
@@ -435,34 +435,38 @@ const CASESP2 = {
 };
 
 
-function exportCasePDF(caseNum){
+function exportCaseReport(caseNum){
   const assets = getCaseAssets(caseNum);
-  let html = `
+  const html = `
   <html>
   <head>
-    <title>${caseNum}</title>
-    <style>
-      body{font-family:Arial;padding:20px}
-      table{border-collapse:collapse;width:100%}
-      td,th{border:1px solid #ccc;padding:6px;font-size:12px}
-    </style>
+  <title>${caseNum}</title>
+  <style>
+    body{font-family:Arial;padding:24px}
+    table{border-collapse:collapse;width:100%}
+    td,th{border:1px solid #ccc;padding:8px;font-size:12px}
+  </style>
   </head>
   <body>
-    <h2>Судова справа: ${caseNum}</h2>
+    <h2>Судова справа № ${caseNum}</h2>
     <table>
-      <tr><th>#</th><th>Категорія</th><th>Актив</th></tr>
-      ${assets.map((a,i)=>`
-        <tr>
-          <td>${i+1}</td>
-          <td>${CAT_LABELS[a._cat]||a._cat}</td>
-          <td>${a.addr||a.desc||a.id||''}</td>
-        </tr>
-      `).join('')}
+      <tr>
+        <th>ID</th>
+        <th>Категорія</th>
+        <th>Адреса / Опис</th>
+      </tr>
+      ${assets.map(a=>`
+      <tr>
+        <td>${a.id||''}</td>
+        <td>${a._cat||''}</td>
+        <td>${a.addr||a.desc||''}</td>
+      </tr>`).join('')}
     </table>
   </body>
   </html>`;
-  const w = window.open('', '_blank');
+  const w = window.open('');
   w.document.write(html);
   w.document.close();
-  setTimeout(()=>w.print(),500);
+  w.focus();
+  setTimeout(()=>window.print(),700);
 }

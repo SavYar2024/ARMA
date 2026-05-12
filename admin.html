@@ -1311,30 +1311,23 @@ async function submitChangePwd(){
 </script>
 
 
-<script>
-async function loadDashboardStats(){
+<script id="dashboardStatsFix">
+document.addEventListener('DOMContentLoaded', async ()=>{
   try{
-    const r = await fetch('stats.json');
+    const r = await fetch('stats.json?_=' + Date.now());
     const s = await r.json();
 
-    document.querySelectorAll('[data-stat-total]').forEach(el=>{
-      el.textContent=s.total||0;
-    });
+    const total=document.getElementById('s-total');
+    const arr=document.getElementById('s-arr');
+    const mgr=document.getElementById('s-mgr');
 
-    document.querySelectorAll('[data-stat-arrested]').forEach(el=>{
-      el.textContent=s.arrested||0;
-    });
-
-    document.querySelectorAll('[data-stat-manager]').forEach(el=>{
-      el.textContent=s.with_manager||0;
-    });
-
+    if(total) total.textContent=(s.total||0).toLocaleString('uk-UA');
+    if(arr) arr.textContent=(s.arrested||0).toLocaleString('uk-UA');
+    if(mgr) mgr.textContent=(s.with_manager||0).toLocaleString('uk-UA');
   }catch(e){
-    console.log(e);
+    console.error(e);
   }
-}
-document.addEventListener('DOMContentLoaded', loadDashboardStats);
+});
 </script>
 </body>
-
 </html>

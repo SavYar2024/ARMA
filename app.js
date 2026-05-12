@@ -43,7 +43,7 @@ const DATA_CATS = ['realestate','land','transport','corp','money','movable','oth
 
 // ─── STATE ───────────────────────────────────────────────────
 const ST = {
-  page:'home', search:'', groupFilter:'', lastOpenedCase:null,
+  page:'home', search:'', groupFilter:'',
   re:    {arr:'all', cmplx:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
   land:  {arr:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
   cards: {arr:'all', cmplx:'all', mgr:'all', zone:'all', pg:0, ps:80, key:null},
@@ -53,6 +53,14 @@ const ST = {
 };
 const CACHE = {};
 let STATS = {};
+
+function resetTransientState(){
+  ST.search='';
+  ST.search_q='';
+  ST.groupFilter='';
+  ST.expandedId=null;
+}
+
 
 // ─── UTILS ───────────────────────────────────────────────────
 const fmt = n => Number(n||0).toLocaleString('uk-UA');
@@ -1057,21 +1065,35 @@ const APP={
   },
 
   goToRecord(id,cat){
+    resetTransientState();
+
     if(cat==='realestate'||cat==='land'){
       this.go(cat).then(()=>{
         setTimeout(()=>{
-          if(cat==='realestate') REMAP.select(id,true);
-          else LANDMAP.select(id,true);
-        },300);
+          if(cat==='realestate' && typeof REMAP!=='undefined'){
+            REMAP.select(id,true);
+          } else if(cat==='land' && typeof LANDMAP!=='undefined'){
+            LANDMAP.select(id,true);
+          }
+        },500);
       });
-    } else {
-      ST.cards.key=cat; ST.expandedId=id;
-      this.go(cat).then(()=>setTimeout(()=>{
-        const el=document.getElementById('ce-'+id);
-        if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-        else CARDS.expand(id);
-      },300));
+      return;
     }
+
+    ST.cards.key=cat;
+    ST.expandedId=id;
+
+    this.go(cat).then(()=>{
+      setTimeout(()=>{
+        if(typeof CARDS!=='undefined'){
+          CARDS.expand(id);
+        }
+        const el=document.getElementById('ce-'+id);
+        if(el){
+          el.scrollIntoView({behavior:'smooth',block:'center'});
+        }
+      },500);
+    });
   },
 
   onSearch(val){
@@ -1158,12 +1180,3 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 </style>`);
 
 document.addEventListener('DOMContentLoaded',()=>APP.init());
-
-
-// Added fixes 2026
-function resetSearchState(){
-  ST.search='';
-  ST.search_q='';
-  ST.groupFilter='';
-  ST.expandedId=null;
-}
