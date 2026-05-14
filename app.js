@@ -685,7 +685,15 @@ const CARDS=(()=>{
           ${r.court?`<div class="ce-sec" style="grid-column:1/-1"><h4>⚖ Судові рішення</h4><p class="dp-desc">${esc(r.court)}</p></div>`:''}
           <div class="ce-sec" style="grid-column:1/-1"><h4>📝 Повний опис</h4><p class="dp-desc">${esc(r.desc||'—')}</p></div>
           ${r.notes?`<div class="ce-sec" style="grid-column:1/-1;background:rgba(217,119,6,.05)"><h4>📌 Пропозиції / Стан активу</h4><p class="dp-desc">${esc(r.notes)}</p></div>`:''}
-          ${r.court_cases&&r.court_cases.length?`<div class="ce-sec" style="grid-column:1/-1"><h4>⚖ Номери судових справ</h4><div style="display:flex;gap:5px;flex-wrap:wrap">${(r.court_cases||[]).map(c=>`<span class="court-case-pill" onclick="APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase('${c.replace(/'/g,\"\\'\")}')})" title="Відкрити справу ${c}">${esc(c)}</span>`).join('')}</div></div>`:''}
+          ${(r.court_cases||[]).map(c=>`
+  <span
+    class="court-case-pill"
+    onclick="APP.searchByCourt('${String(c).replace(/'/g,'\\\\\\'')}')"
+    title="Відкрити активи по справі ${esc(c)}"
+  >
+    ${esc(c)}
+  </span>
+`).join('')}</div></div>`:''}
         </div>
         <div class="ce-actions">
           <button class="dp-btn pdf-btn" onclick="downloadPDF('${esc(r.id)}','${ST.cards.key}')">📄 PDF</button>
