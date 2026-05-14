@@ -403,11 +403,47 @@ input,select,textarea{font-family:inherit}
 .zone-legend-desc{color:var(--mid);font-size:10px;margin-top:1px}
 
 /* ── GEO BAR ─────────────────────────────────────────────────── */
-.geo-bar{position:absolute;top:10px;left:50%;transform:translateX(-50%);
-  z-index:600;padding:7px 16px;border-radius:20px;
-  background:rgba(255,255,255,.95);border:1.5px solid rgba(26,86,219,.2);
-  color:var(--blue);font-size:11.5px;display:none;align-items:center;gap:8px;
-  box-shadow:var(--shadow);white-space:nowrap;max-width:90%}
+.geo-bar{
+  position:absolute;
+  top:8px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:500;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+
+  width:auto;
+  max-width:min(92vw,900px);
+
+  min-height:34px;
+
+  padding:6px 12px;
+
+  border-radius:12px;
+
+  background:rgba(15,23,42,.72);
+  backdrop-filter:blur(8px);
+
+  color:#fff;
+
+  font-size:12px;
+  line-height:1.2;
+
+  box-shadow:0 2px 10px rgba(0,0,0,.18);
+
+  pointer-events:auto;
+}
+
+.geo-bar *{
+  margin:0!important;
+}
+
+.leaflet-container{
+  overflow:hidden;
+}
 .geo-bar.show{display:flex}
 
 /* ── GEOCODING EXPORT/IMPORT ─────────────────────────────────── */
@@ -497,73 +533,3 @@ input,select,textarea{font-family:inherit}
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .cai-loc{font-size:10.5px;color:var(--mid);margin-top:3px}
 .cai-kad{font-size:10px;font-family:'DM Mono',monospace;color:var(--teal);margin-top:2px}
-
-
-/* ── CASES PAGE v4 ───────────────────────────────────────────── */
-.cases-tip{margin-top:8px;padding:8px 12px;background:rgba(26,86,219,.06);
-  border-radius:8px;border-left:3px solid var(--blue);font-size:11.5px;color:var(--ink3)}
-.cases-tip code{font-family:'DM Mono',monospace;background:rgba(26,86,219,.1);
-  padding:1px 5px;border-radius:4px;font-size:11px}
-
-.case-row{display:flex;align-items:center;gap:12px;padding:12px 16px;
-  border:1.5px solid var(--line);border-radius:var(--r-lg);background:var(--surface-hi);
-  cursor:pointer;transition:all .14s;margin-bottom:6px}
-.case-row:hover{border-color:var(--blue);background:#fff;transform:translateX(3px);
-  box-shadow:0 3px 14px rgba(26,86,219,.1)}
-.case-row-left{flex:1;display:flex;flex-direction:column;gap:5px}
-.case-row-num{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.case-num-text{font-size:14px;font-weight:700;color:var(--ink)}
-.case-asset-count{font-size:11px;color:var(--mid);background:rgba(0,0,0,.05);
-  padding:2px 8px;border-radius:10px}
-.case-dates{font-size:11px;color:var(--mid)}
-.case-cats-row{font-size:11px;color:var(--mid)}
-.case-row-arrow{font-size:18px;color:var(--blue);opacity:.4;transition:.14s}
-.case-row:hover .case-row-arrow{opacity:1}
-
-/* ── CASE DETAIL PAGE ───────────────────────────────────────── */
-.case-detail-page{padding:0;max-width:100%}
-.case-detail-header{display:flex;align-items:flex-start;gap:16px;padding:20px 24px;
-  border-bottom:1.5px solid var(--line);background:var(--surface-hi);
-  position:sticky;top:0;z-index:100;backdrop-filter:var(--blur)}
-.case-detail-num{font-size:20px;font-weight:800;color:var(--ink);margin:6px 0 4px}
-.case-detail-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mid)}
-.case-summary-cards{display:flex;gap:10px;flex-wrap:wrap;padding:16px 24px;
-  border-bottom:1px solid var(--line);background:rgba(248,250,252,.8)}
-.cs-card{padding:10px 16px;background:#fff;border-radius:var(--r-lg);
-  border:1.5px solid var(--line);border-left:3px solid var(--blue);min-width:110px}
-.cs-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.4px;
-  color:var(--mid);font-weight:600;margin-bottom:3px}
-.cs-card-value{font-size:22px;font-weight:800;color:var(--ink3)}
-
-.case-map-section{padding:16px 24px 0}
-.case-section-title{padding:14px 24px 10px;font-size:13px;font-weight:700;
-  color:var(--ink3);display:flex;align-items:center;gap:8px}
-.case-cat-section{margin:0 24px 16px;border:1.5px solid var(--line);
-  border-radius:var(--r-lg);overflow:hidden}
-.case-cat-header{padding:10px 14px;background:rgba(248,250,252,.9);
-  font-weight:700;font-size:13px;color:var(--ink3);
-  display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
-.case-cat-cnt{background:var(--blue);color:#fff;font-size:10px;font-weight:700;
-  padding:1px 7px;border-radius:10px;margin-left:auto}
-.case-assets-table-wrap{overflow-x:auto;max-height:400px;overflow-y:auto}
-.case-assets-table{width:100%;border-collapse:collapse;font-size:11.5px}
-.case-assets-table thead tr{background:#f8fafc;position:sticky;top:0;z-index:1}
-.case-assets-table th{padding:7px 10px;border-bottom:1.5px solid var(--line);
-  text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;
-  color:var(--mid);font-weight:700;white-space:nowrap}
-.case-asset-tr{cursor:pointer;transition:background .1s}
-.case-asset-tr:hover{background:rgba(26,86,219,.05)}
-.case-asset-tr td{padding:7px 10px;border-bottom:1px solid var(--line)}
-.case-asset-tr:last-child td{border-bottom:none}
-
-/* ── POLYGON / CADASTRE ─────────────────────────────────────── */
-.geo-bar{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
-  z-index:600;padding:8px 18px;border-radius:24px;
-  background:rgba(255,255,255,.97);border:1.5px solid rgba(8,145,178,.3);
-  color:#0891b2;font-size:11.5px;display:none;align-items:center;gap:8px;
-  box-shadow:0 4px 20px rgba(0,0,0,.12);white-space:nowrap;max-width:92%;
-  backdrop-filter:blur(8px)}
-.geo-bar.show{display:flex}
-.geo-bar a{color:#0891b2;font-weight:600}
-.geo-bar code{background:rgba(8,145,178,.1);padding:1px 6px;
-  border-radius:4px;font-size:10.5px;font-family:'DM Mono',monospace}
