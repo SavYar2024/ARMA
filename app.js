@@ -1080,18 +1080,8 @@ async function _loadGeocacheBackground(){
     let applied = 0;
     for(const [q, coords] of Object.entries(data)){
       if(!coords.lat) continue;
-      if(re) re.forEach(r=>{ if(
-  r.gq===q &&
-  r.geo_quality!=='exact' &&
-  r.geo_quality!=='manual' &&
-  !(r.lat && r.lng)
-){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
-      if(land) land.forEach(r=>{ if(
-  r.gq===q &&
-  r.geo_quality!=='exact' &&
-  r.geo_quality!=='manual' &&
-  !(r.lat && r.lng)
-){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
+      if(re) re.forEach(r=>{ if(r.gq===q && r.geo_quality!=='exact'){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
+      if(land) land.forEach(r=>{ if(r.gq===q && r.geo_quality!=='exact'){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
     }
     if(applied > 0) console.log(`Geocache: improved ${applied} coordinates`);
   } catch(e){ /* silent fail */ }
@@ -1256,6 +1246,14 @@ async function loadJSON(file){
   const r=await fetch(file);
   if(!r.ok) throw new Error(`${file}: HTTP ${r.status}`);
   CACHE[file]=await r.json();
+
+      for(const rec of CACHE[file]){
+
+        if(rec.full_address){
+          rec.addr = rec.full_address;
+        }
+
+      }
   return CACHE[file];
 }
 
