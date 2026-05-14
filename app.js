@@ -115,46 +115,6 @@ async function loadAll(){
   await Promise.all(tasks);
 }
 
-
-
-function buildAddress(r){
-
-  if(r.full_address && String(r.full_address).trim()){
-    return String(r.full_address).trim();
-  }
-
-  const parts = [];
-
-  if(r.oblast) parts.push(r.oblast);
-
-  if(r.district) parts.push(r.district);
-
-  if(r.city){
-    const np = r.np_type ? (r.np_type + ' ') : '';
-    parts.push(np + r.city);
-  }
-
-  if(r.street){
-
-    const st = r.street_type
-      ? (r.street_type + ' ' + r.street)
-      : r.street;
-
-    parts.push(st);
-  }
-
-  if(r.house){
-    parts.push('буд. ' + r.house);
-  }
-
-  if(r.apartment){
-    parts.push('кв. ' + r.apartment);
-  }
-
-  return parts.filter(Boolean).join(', ');
-}
-
-
 function allRecords(){
   return DATA_CATS.flatMap(k => (CACHE[k+'.json']||[]).map(r=>({...r,_cat:k})));
 }
@@ -1121,19 +1081,17 @@ async function _loadGeocacheBackground(){
     for(const [q, coords] of Object.entries(data)){
       if(!coords.lat) continue;
       if(re) re.forEach(r=>{ if(
-          r.gq &&
-          r.gq===q &&
-          r.geo_quality!=='exact' &&
-          r.geo_quality!=='manual' &&
-          !(r.lat && r.lng)
-        ){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
+  r.gq===q &&
+  r.geo_quality!=='exact' &&
+  r.geo_quality!=='manual' &&
+  !(r.lat && r.lng)
+){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
       if(land) land.forEach(r=>{ if(
-          r.gq &&
-          r.gq===q &&
-          r.geo_quality!=='exact' &&
-          r.geo_quality!=='manual' &&
-          !(r.lat && r.lng)
-        ){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
+  r.gq===q &&
+  r.geo_quality!=='exact' &&
+  r.geo_quality!=='manual' &&
+  !(r.lat && r.lng)
+){ r.lat=coords.lat; r.lng=coords.lng; r.geo_quality='geocoded'; applied++; }});
     }
     if(applied > 0) console.log(`Geocache: improved ${applied} coordinates`);
   } catch(e){ /* silent fail */ }
@@ -1298,22 +1256,6 @@ async function loadJSON(file){
   const r=await fetch(file);
   if(!r.ok) throw new Error(`${file}: HTTP ${r.status}`);
   CACHE[file]=await r.json();
-
-      CACHE[file].forEach(function(rec){
-
-        const rebuilt = buildAddress(rec);
-
-        if(rebuilt && rebuilt.length > 10){
-          rec.addr = rebuilt;
-        }
-
-        rec.gq = [
-          rec.city,
-          rec.street,
-          rec.house
-        ].filter(Boolean).join(', ');
-
-      });
   return CACHE[file];
 }
 
