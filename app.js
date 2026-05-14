@@ -271,16 +271,18 @@ ${r.notes?`<div class="dp-sec" style="background:rgba(217,119,6,.05);border-colo
   <h4>📌 Пропозиції / Стан активу</h4>
   <p class="dp-desc">${esc(r.notes)}</p>
 </div>`:''}
-${(r.court_cases || []).map(c => `
-  <span
-    class="court-case-pill"
-    data-case="${esc(c)}"
-    onclick="APP.searchByCourt(this.dataset.case)"
-    title="Відкрити активи по справі ${esc(c)}"
-  >
-    ${esc(c)}
-  </span>
-`).join('')}
+${(r.court_cases&&r.court_cases.length)||(r.primary_verdict)?`<div class="dp-sec" style="background:rgba(26,86,219,.04);border-color:rgba(26,86,219,.15)">
+  <h4>⚖ Юридичний контекст</h4>
+  ${r.primary_verdict?`<div class="dp-row"><span class="dp-l">Вердикт</span>
+    <span class="dp-v bold" style="color:#1a56db">${esc(r.primary_verdict)}</span></div>`:''}
+  ${r.court_cases&&r.court_cases.length?`<div class="dp-row"><span class="dp-l">Справи (${r.court_cases.length})</span>
+    <span class="dp-v">
+      ${r.court_cases.length===1
+        ? `<span class="court-case-pill" onclick="APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase('${r.court_cases[0].replace(/'/g,"\'")}')})">${esc(r.court_cases[0])}</span>`
+        : `<select class="oblast-select" style="margin-top:4px;font-family:'DM Mono',monospace;font-size:11px"
+            onchange="if(this.value)APP.go('cases').then(()=>{if(typeof CASESP2!=='undefined')CASESP2.openCase(this.value);this.value=''})">
+            <option value="">— Оберіть справу (${r.court_cases.length}) —</option>
+            ${(r.court_cases||[]).map(c=>`<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('')}
           </select>`
       }
     </span></div>`:''}
