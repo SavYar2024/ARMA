@@ -1230,7 +1230,7 @@ const APP={
         ${t.label}<span class="nav-cnt">${fmt(t.cnt?STATS[t.cnt]||0:t.id==='home'?STATS.total||0:0)}</span>
       </button>`).join('')+`
       <button class="nav-tab" data-page="search" onclick="APP.go('search')" title="Пошук по всіх категоріях">🔎 Пошук</button>
-      <button class="nav-tab" data-page="cases" onclick="APP.go('cases')" title="Судові справи">⚖ Справи <span class="nav-cnt">${STATS.total_court_cases||4007}</span></button>\`;
+      <button class="nav-tab" data-page="cases" onclick="APP.go('cases')" title="Судові справи">⚖ Справи <span class="nav-cnt">${STATS.total_court_cases||4007}</span></button>`;
 
     setFill(100);
     setTimeout(()=>{
