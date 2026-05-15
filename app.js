@@ -45,7 +45,7 @@ const DATA_CATS = ['realestate','land','transport','corp','money','movable','oth
 const ST = {
   page:'home', search:'', groupFilter:'',
   re:    {arr:'all', cmplx:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
-  land:  {arr:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
+  land:  {arr:'all', cmplx:'all', mgr:'all', zone:'all', oblast:'', pg:0, ps:60},
   cards: {arr:'all', cmplx:'all', mgr:'all', zone:'all', pg:0, ps:80, key:null},
   search_q:'', search_arr:'all', search_pg:0, search_ps:50,
   cases_q:'', cases_pg:0, cases_ps:30,

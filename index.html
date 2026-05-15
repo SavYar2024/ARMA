@@ -149,6 +149,12 @@
           <button class="fbtn zone-red"    data-f="zone" data-v="Червона зона" onclick="LANDMAP.filter(this)" title="❌ Не привабливі">🔴 Червона</button>
           <button class="fbtn zone-grey"   data-f="zone" data-v="Сіра зона" onclick="LANDMAP.filter(this)" title="❓ Не визначено">⚪ Сіра</button>
         </div>
+        <div class="f-grp">
+          <span class="f-lbl">Складність</span>
+          <button class="fbtn active" data-f="cmplx" data-v="all"     onclick="LANDMAP.filter(this)">Всі</button>
+          <button class="fbtn"        data-f="cmplx" data-v="simple"  onclick="LANDMAP.filter(this)">Прості</button>
+          <button class="fbtn"        data-f="cmplx" data-v="complex" onclick="LANDMAP.filter(this)">Складні</button>
+        </div>
       </div>
       <div class="sb-list" id="land-list"></div>
       <div class="sb-pgn" id="land-pgn" style="display:none"></div>
